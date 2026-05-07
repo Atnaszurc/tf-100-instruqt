@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Solve script for Challenge 1: Introduction to IaC & Terraform Basics
+# This script automatically completes the challenge requirements
+
+cd /root/terraform-lab
+
+# Copy the complete solution from the examples
+cp -r /root/terraform-lab-solutions/challenge-01/* .
+
+# Initialize Terraform
+terraform init
+
+# Apply the configuration
+terraform apply -auto-approve
+
+echo "Challenge 1 solved successfully!"

@@ -1,39 +1,31 @@
 ---
 slug: skills-assessment
-id: tf105-skills-assessment
+id: fv7s1evxx0qn
 type: challenge
-title: "Challenge 5: Skills Assessment"
-teaser: "Put all your Terraform knowledge to the test with a comprehensive project"
+title: 'Challenge 5: Skills Assessment'
+teaser: Put all your Terraform knowledge to the test with a comprehensive project
 notes:
 - type: text
-  contents: |
-    # Challenge 5: Skills Assessment
-    
-    This is your final challenge - a comprehensive assessment of everything you've learned!
-    
-    **What You'll Build:**
-    - Multi-tier application infrastructure
-    - Multiple environments using workspaces
-    - Automated configuration with cloud-init
-    - Proper variable management
-    - Complete outputs and documentation
-    
-    **No Step-by-Step Instructions!**
-    You'll receive requirements and must implement them yourself.
-    
-    **Time Estimate**: 90-120 minutes
-    
-    Show what you've learned! 🚀
+  contents: "# Challenge 5: Skills Assessment\n\nThis is your final challenge - a
+    comprehensive assessment of everything you've learned!\n\n**What You'll Build:**\n-
+    Multi-tier application infrastructure\n- Multiple environments using workspaces\n-
+    Automated configuration with cloud-init\n- Proper variable management\n- Complete
+    outputs and documentation\n\n**No Step-by-Step Instructions!**\nYou'll receive
+    requirements and must implement them yourself.\n\nShow
+    what you've learned! \U0001F680\n"
 tabs:
-- title: Terminal
+- id: ikynvrcwrkw8
+  title: Terminal
   type: terminal
   hostname: workstation
-- title: Code Editor
+- id: bt4sjhs5pelg
+  title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
 difficulty: basic
 timelimit: 7200
+enhanced_loading: null
 ---
 
 # Challenge 5: Skills Assessment
@@ -210,7 +202,7 @@ Your infrastructure must pass these tests:
    ```bash
    terraform workspace select dev
    terraform apply -auto-approve
-   
+
    terraform workspace select prod
    terraform apply -auto-approve
    ```
@@ -402,8 +394,8 @@ Before clicking "Check", verify:
 
 ---
 
-**Time Limit**: 2 hours  
-**Difficulty**: Comprehensive Assessment  
+**Time Limit**: 2 hours
+**Difficulty**: Comprehensive Assessment
 **Prerequisites**: Challenges 1-4 completed
 
 Good luck! 🎯

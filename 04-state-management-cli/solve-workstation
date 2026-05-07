@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+# Solve script for Challenge 4: State Management & CLI
+
+cd /root/terraform-lab
+
+# Copy the complete solution
+cp -r /root/terraform-lab-solutions/challenge-04/* .
+
+# Create workspaces
+terraform workspace new dev 2>/dev/null || terraform workspace select dev
+terraform workspace new prod 2>/dev/null || terraform workspace select prod
+
+# Apply in dev workspace
+terraform workspace select dev
+terraform init
+terraform apply -auto-approve
+
+# Apply in prod workspace
+terraform workspace select prod
+terraform apply -auto-approve
+
+echo "Challenge 4 solved successfully!"

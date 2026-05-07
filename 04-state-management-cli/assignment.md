@@ -1,35 +1,29 @@
 ---
 slug: state-management-cli
-id: tf104-state-management-cli
+id: awpvzyudwzcy
 type: challenge
-title: "Challenge 4: State Management & CLI"
-teaser: "Master Terraform state operations, workspaces, and advanced CLI features"
+title: 'Challenge 4: State Management & CLI'
+teaser: Master Terraform state operations, workspaces, and advanced CLI features
 notes:
 - type: text
-  contents: |
-    # Challenge 4: State Management & CLI
-    
-    In this challenge, you'll master Terraform's state system and CLI:
-    
-    - **State Management**: Understanding and manipulating state
-    - **State Commands**: Inspecting and modifying state safely
-    - **Workspaces**: Managing multiple environments
-    - **CLI Features**: Advanced commands and debugging
-    - **State Locking**: Preventing concurrent modifications
-    
-    **Time Estimate**: 60 minutes
-    
-    Let's master Terraform's state system! 🔧
+  contents: "# Challenge 4: State Management & CLI\n\nIn this challenge, you'll master
+    Terraform's state system and CLI:\n\n- **State Management**: Understanding and
+    manipulating state\n- **State Commands**: Inspecting and modifying state safely\n-
+    **Workspaces**: Managing multiple environments\n- **CLI Features**: Advanced commands
+    and debugging\n- **State Locking**: Preventing concurrent modifications\n\nLet's master Terraform's state system! \U0001F527\n"
 tabs:
-- title: Terminal
+- id: qxsfomqd7tiv
+  title: Terminal
   type: terminal
   hostname: workstation
-- title: Code Editor
+- id: nahvnvdyk5ha
+  title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
 difficulty: basic
 timelimit: 3600
+enhanced_loading: null
 ---
 
 # Challenge 4: State Management & CLI
@@ -73,11 +67,11 @@ You're managing infrastructure across multiple environments (dev, staging, prod)
 
 **With Terraform state mastery**, you can:
 
-✅ Track all infrastructure accurately  
-✅ Make safe, predictable changes  
-✅ Manage multiple environments easily  
-✅ Import existing infrastructure  
-✅ Debug issues effectively  
+✅ Track all infrastructure accurately
+✅ Make safe, predictable changes
+✅ Manage multiple environments easily
+✅ Import existing infrastructure
+✅ Debug issues effectively
 ✅ Collaborate safely with teams
 
 ---
@@ -204,7 +198,7 @@ terraform workspace delete staging
 # Reference current workspace in code
 resource "libvirt_domain" "vm" {
   name = "${terraform.workspace}-vm"
-  
+
   # Different specs per workspace
   memory = terraform.workspace == "prod" ? 4096 : 2048
   vcpu   = terraform.workspace == "prod" ? 4 : 2
@@ -388,7 +382,7 @@ Create `main.tf`:
 cat > main.tf << 'EOF'
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
@@ -413,15 +407,15 @@ resource "libvirt_domain" "vm" {
   name   = "${terraform.workspace}-vm"
   memory = terraform.workspace == "prod" ? 2048 : 1024
   vcpu   = terraform.workspace == "prod" ? 2 : 1
-  
+
   disk {
     volume_id = libvirt_volume.disk.id
   }
-  
+
   network_interface {
     network_name = "default"
   }
-  
+
   console {
     type        = "pty"
     target_type = "serial"
@@ -797,10 +791,10 @@ terraform destroy  # Would destroy infrastructure
    ```bash
    # Move resource
    terraform state mv old_name new_name
-   
+
    # Remove resource
    terraform state rm resource_name
-   
+
    # Replace provider
    terraform state replace-provider old new
    ```
@@ -1078,7 +1072,7 @@ terraform state mv old new
 ```hcl
 # ❌ Too complex for workspaces
 resource "aws_instance" "vm" {
-  ami = terraform.workspace == "prod" ? "ami-prod" : 
+  ami = terraform.workspace == "prod" ? "ami-prod" :
         terraform.workspace == "staging" ? "ami-staging" :
         terraform.workspace == "dev" ? "ami-dev" : "ami-default"
 }
@@ -1141,13 +1135,13 @@ terraform {
 
 You've mastered Terraform state and CLI! You can now:
 
-✅ Understand and inspect Terraform state  
-✅ Modify state safely with commands  
-✅ Use workspaces for environment management  
-✅ Import existing resources  
-✅ Debug with console and logging  
-✅ Use advanced CLI features  
-✅ Troubleshoot state issues  
+✅ Understand and inspect Terraform state
+✅ Modify state safely with commands
+✅ Use workspaces for environment management
+✅ Import existing resources
+✅ Debug with console and logging
+✅ Use advanced CLI features
+✅ Troubleshoot state issues
 ✅ Follow state management best practices
 
 **Next Challenge**: Skills Assessment - Put everything together! 🎯

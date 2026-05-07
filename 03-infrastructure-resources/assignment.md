@@ -1,35 +1,29 @@
 ---
 slug: infrastructure-resources
-id: tf103-infrastructure-resources
+id: szxc5nuwgxgq
 type: challenge
-title: "Challenge 3: Infrastructure Resources"
-teaser: "Build complete infrastructure with networks, storage, and virtual machines"
+title: 'Challenge 3: Infrastructure Resources'
+teaser: Build complete infrastructure with networks, storage, and virtual machines
 notes:
 - type: text
-  contents: |
-    # Challenge 3: Infrastructure Resources
-    
-    In this challenge, you'll build a complete infrastructure stack including:
-    
-    - **Networks**: Virtual networks with proper addressing
-    - **Storage**: Volumes and storage pools
-    - **Virtual Machines**: Complete VMs with networking and storage
-    - **Cloud-Init**: Automated VM configuration
-    - **Dependencies**: Managing resource relationships
-    
-    **Time Estimate**: 2 hours
-    
-    Let's build real infrastructure! 🏗️
+  contents: "# Challenge 3: Infrastructure Resources\n\nIn this challenge, you'll
+    build a complete infrastructure stack including:\n\n- **Networks**: Virtual networks
+    with proper addressing\n- **Storage**: Volumes and storage pools\n- **Virtual
+    Machines**: Complete VMs with networking and storage\n- **Cloud-Init**: Automated
+    VM configuration\n- **Dependencies**: Managing resource relationships\n\nLet's build real infrastructure! \U0001F3D7️\n"
 tabs:
-- title: Terminal
+- id: tbjuwaryuc7y
+  title: Terminal
   type: terminal
   hostname: workstation
-- title: Code Editor
+- id: 7qb4iwcve5ap
+  title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
 difficulty: basic
 timelimit: 7200
+enhanced_loading: null
 ---
 
 # Challenge 3: Infrastructure Resources
@@ -71,10 +65,10 @@ You're tasked with deploying a web application infrastructure that includes:
 
 **With Terraform infrastructure resources**, you can:
 
-✅ Define complete infrastructure as code  
-✅ Ensure proper resource dependencies  
-✅ Automate VM configuration with cloud-init  
-✅ Maintain consistent networking and storage  
+✅ Define complete infrastructure as code
+✅ Ensure proper resource dependencies
+✅ Automate VM configuration with cloud-init
+✅ Maintain consistent networking and storage
 ✅ Scale infrastructure reliably
 
 ---
@@ -92,16 +86,16 @@ resource "libvirt_network" "app_network" {
   mode      = "nat"
   domain    = "app.local"
   addresses = ["10.17.3.0/24"]
-  
+
   dhcp {
     enabled = true
   }
-  
+
   dns {
     enabled    = true
     local_only = false
   }
-  
+
   autostart = true
 }
 ```
@@ -167,7 +161,7 @@ Cloud-init automates VM initialization:
 # Cloud-init configuration
 data "template_file" "user_data" {
   template = file("${path.module}/cloud-init.yaml")
-  
+
   vars = {
     hostname = "web-server"
     ssh_key  = file("~/.ssh/id_rsa.pub")
@@ -223,36 +217,36 @@ resource "libvirt_domain" "web_server" {
   name   = "web-server"
   memory = 2048
   vcpu   = 2
-  
+
   # Cloud-init
   cloudinit = libvirt_cloudinit_disk.commoninit.id
-  
+
   # Network interface
   network_interface {
     network_id     = libvirt_network.app_network.id
     hostname       = "web-server"
     wait_for_lease = true
   }
-  
+
   # Boot disk
   disk {
     volume_id = libvirt_volume.vm_disk.id
   }
-  
+
   # Console access
   console {
     type        = "pty"
     target_type = "serial"
     target_port = "0"
   }
-  
+
   # Graphics (for VNC/SPICE access)
   graphics {
     type        = "spice"
     listen_type = "address"
     autoport    = true
   }
-  
+
   # Lifecycle management
   lifecycle {
     create_before_destroy = false
@@ -269,7 +263,7 @@ Terraform automatically handles dependencies, but you can make them explicit:
 # Implicit dependency (Terraform detects automatically)
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-  
+
   disk {
     volume_id = libvirt_volume.disk.id  # Implicit dependency
   }
@@ -278,7 +272,7 @@ resource "libvirt_domain" "vm" {
 # Explicit dependency (when needed)
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-  
+
   depends_on = [
     libvirt_network.app_network,
     libvirt_volume.disk
@@ -304,7 +298,7 @@ data "libvirt_network" "default" {
 # Use in resource
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-  
+
   network_interface {
     network_id = data.libvirt_network.default.id
   }
@@ -342,16 +336,16 @@ resource "libvirt_network" "app_network" {
   mode      = "nat"
   domain    = "app.local"
   addresses = ["10.17.3.0/24"]
-  
+
   dhcp {
     enabled = true
   }
-  
+
   dns {
     enabled    = true
     local_only = false
   }
-  
+
   autostart = true
 }
 
@@ -509,41 +503,41 @@ write_files:
       from http.server import HTTPServer, BaseHTTPRequestHandler
       import json
       import socket
-      
+
       class AppHandler(BaseHTTPRequestHandler):
           def do_GET(self):
               self.send_response(200)
               self.send_header('Content-type', 'application/json')
               self.end_headers()
-              
+
               response = {
                   "service": "app-server",
                   "hostname": socket.gethostname(),
                   "status": "healthy",
                   "message": "Application server running via Terraform!"
               }
-              
+
               self.wfile.write(json.dumps(response, indent=2).encode())
-      
+
       if __name__ == '__main__':
           server = HTTPServer(('0.0.0.0', 8080), AppHandler)
           print("App server starting on port 8080...")
           server.serve_forever()
     permissions: '0755'
-  
+
   - path: /etc/systemd/system/app-server.service
     content: |
       [Unit]
       Description=Application Server
       After=network.target
-      
+
       [Service]
       Type=simple
       User=ubuntu
       WorkingDirectory=/opt/app
       ExecStart=/usr/bin/python3 /opt/app/server.py
       Restart=always
-      
+
       [Install]
       WantedBy=multi-user.target
     permissions: '0644'
@@ -587,8 +581,8 @@ write_files:
           email TEXT UNIQUE NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
-      
-      INSERT INTO users (name, email) VALUES 
+
+      INSERT INTO users (name, email) VALUES
           ('Alice Johnson', 'alice@example.com'),
           ('Bob Smith', 'bob@example.com'),
           ('Carol Davis', 'carol@example.com');
@@ -642,25 +636,25 @@ resource "libvirt_domain" "web_server" {
   name   = "web-server"
   memory = 1024
   vcpu   = 1
-  
+
   cloudinit = libvirt_cloudinit_disk.web_init.id
-  
+
   network_interface {
     network_id     = libvirt_network.app_network.id
     hostname       = "web-server"
     wait_for_lease = true
   }
-  
+
   disk {
     volume_id = libvirt_volume.web_disk.id
   }
-  
+
   console {
     type        = "pty"
     target_type = "serial"
     target_port = "0"
   }
-  
+
   graphics {
     type        = "spice"
     listen_type = "address"
@@ -673,25 +667,25 @@ resource "libvirt_domain" "app_server" {
   name   = "app-server"
   memory = 1024
   vcpu   = 1
-  
+
   cloudinit = libvirt_cloudinit_disk.app_init.id
-  
+
   network_interface {
     network_id     = libvirt_network.app_network.id
     hostname       = "app-server"
     wait_for_lease = true
   }
-  
+
   disk {
     volume_id = libvirt_volume.app_disk.id
   }
-  
+
   console {
     type        = "pty"
     target_type = "serial"
     target_port = "0"
   }
-  
+
   graphics {
     type        = "spice"
     listen_type = "address"
@@ -704,25 +698,25 @@ resource "libvirt_domain" "db_server" {
   name   = "db-server"
   memory = 2048
   vcpu   = 2
-  
+
   cloudinit = libvirt_cloudinit_disk.db_init.id
-  
+
   network_interface {
     network_id     = libvirt_network.app_network.id
     hostname       = "db-server"
     wait_for_lease = true
   }
-  
+
   disk {
     volume_id = libvirt_volume.db_disk.id
   }
-  
+
   console {
     type        = "pty"
     target_type = "serial"
     target_port = "0"
   }
-  
+
   graphics {
     type        = "spice"
     listen_type = "address"
@@ -740,7 +734,7 @@ Create `main.tf`:
 cat > main.tf << 'EOF'
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
@@ -1055,7 +1049,7 @@ resource "libvirt_volume" "vm1_disk" {
    ```bash
    # From host to VM
    ping VM_IP
-   
+
    # From VM to external (via console)
    virsh console vm-name
    ping 8.8.8.8
@@ -1390,12 +1384,12 @@ network_interface {
 
 You've built a complete infrastructure stack! You can now:
 
-✅ Create virtual networks with proper configuration  
-✅ Manage storage pools and volumes efficiently  
-✅ Deploy VMs with automated configuration  
-✅ Use cloud-init for VM initialization  
-✅ Handle resource dependencies correctly  
-✅ Troubleshoot infrastructure issues  
+✅ Create virtual networks with proper configuration
+✅ Manage storage pools and volumes efficiently
+✅ Deploy VMs with automated configuration
+✅ Use cloud-init for VM initialization
+✅ Handle resource dependencies correctly
+✅ Troubleshoot infrastructure issues
 ✅ Build production-ready infrastructure patterns
 
 **Next Challenge**: State Management & CLI - Master Terraform's state system and advanced CLI features! 🚀

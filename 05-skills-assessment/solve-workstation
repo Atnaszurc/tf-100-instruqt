@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Solve script for Challenge 5: Skills Assessment
+
+cd /root/terraform-project
+
+# Copy the complete solution
+cp -r /root/terraform-lab-solutions/challenge-05/* .
+
+# Initialize and apply
+terraform init
+terraform apply -auto-approve
+
+# Wait for VMs to boot and services to start
+sleep 180
+
+echo "Challenge 5 solved successfully!"

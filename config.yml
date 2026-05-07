@@ -1,13 +1,9 @@
 version: "3"
 virtualmachines:
   - name: workstation
-    image: ubuntu2204
-    machine_type: n1-standard-4  # 4 vCPUs, 15GB RAM for nested virtualization
-    allow_external_ingress:
-      - hostname: workstation
-        ports:
-          - 80
-          - 443
-    nested_virtualization: true  # Enable for Libvirt/QEMU
+    image: ubuntu-os-cloud/ubuntu-2404-noble-amd64-v20241004
+    machine_type: n1-standard-8
+    nested_virtualization: true
+    shell: bash
 
 # Made with Bob

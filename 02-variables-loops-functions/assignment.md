@@ -1,35 +1,31 @@
 ---
 slug: variables-loops-functions
-id: tf102-variables-loops-functions
+id: 9fjioaj1cryo
 type: challenge
-title: "Challenge 2: Variables, Loops & Functions"
-teaser: "Master Terraform's data handling with variables, loops, and built-in functions"
+title: 'Challenge 2: Variables, Loops & Functions'
+teaser: Master Terraform's data handling with variables, loops, and built-in functions
 notes:
 - type: text
-  contents: |
-    # Challenge 2: Variables, Loops & Functions
-    
-    In this challenge, you'll learn how to make your Terraform configurations dynamic and reusable using:
-    
-    - **Input Variables**: Accept configuration values from users
-    - **Output Values**: Export information for other configurations
-    - **Local Values**: Compute and reuse expressions
-    - **Loops**: Create multiple similar resources efficiently
-    - **Functions**: Transform and manipulate data
-    
-    **Time Estimate**: 90 minutes
-    
-    Let's make your infrastructure code flexible and powerful! 🚀
+  contents: "# Challenge 2: Variables, Loops & Functions\n\nIn this challenge, you'll
+    learn how to make your Terraform configurations dynamic and reusable using:\n\n-
+    **Input Variables**: Accept configuration values from users\n- **Output Values**:
+    Export information for other configurations\n- **Local Values**: Compute and reuse
+    expressions\n- **Loops**: Create multiple similar resources efficiently\n- **Functions**:
+    Transform and manipulate data\n\nLet's make your
+    infrastructure code flexible and powerful! \U0001F680\n"
 tabs:
-- title: Terminal
+- id: vtfidvhcwo52
+  title: Terminal
   type: terminal
   hostname: workstation
-- title: Code Editor
+- id: 9rx5zokgvr3o
+  title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
 difficulty: basic
 timelimit: 5400
+enhanced_loading: null
 ---
 
 # Challenge 2: Variables, Loops & Functions
@@ -62,10 +58,10 @@ Imagine you're managing infrastructure for multiple environments (dev, staging, 
 
 **With variables, loops, and functions**, you can:
 
-✅ Define infrastructure once, deploy anywhere  
-✅ Customize deployments without changing code  
-✅ Create multiple similar resources efficiently  
-✅ Transform data to meet your needs  
+✅ Define infrastructure once, deploy anywhere
+✅ Customize deployments without changing code
+✅ Create multiple similar resources efficiently
+✅ Transform data to meet your needs
 ✅ Maintain consistency across environments
 
 ---
@@ -81,7 +77,7 @@ variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
   default     = "dev"
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be dev, staging, or prod."
@@ -92,7 +88,7 @@ variable "instance_count" {
   description = "Number of instances to create"
   type        = number
   default     = 1
-  
+
   validation {
     condition     = var.instance_count > 0 && var.instance_count <= 10
     error_message = "Instance count must be between 1 and 10."
@@ -158,7 +154,7 @@ Locals help you avoid repetition and compute derived values:
 locals {
   # Computed naming convention
   name_prefix = "${var.environment}-${var.project_name}"
-  
+
   # Common tags merged with custom tags
   common_tags = merge(
     var.tags,
@@ -168,10 +164,10 @@ locals {
       CreatedAt   = timestamp()
     }
   )
-  
+
   # Conditional logic
   instance_type = var.environment == "prod" ? "large" : "small"
-  
+
   # Complex transformations
   vm_configs = {
     for idx in range(var.instance_count) :
@@ -202,7 +198,7 @@ resource "libvirt_domain" "vm" {
   name   = "vm-${count.index}"
   memory = 2048
   vcpu   = 2
-  
+
   disk {
     volume_id = libvirt_volume.disk[count.index].id
   }
@@ -231,7 +227,7 @@ variable "vms" {
 
 resource "libvirt_domain" "vm" {
   for_each = var.vms
-  
+
   name   = each.key
   memory = each.value.memory
   vcpu   = each.value.vcpu
@@ -244,16 +240,16 @@ resource "libvirt_domain" "vm" {
 # List comprehension
 locals {
   vm_names = [for vm in libvirt_domain.vm : vm.name]
-  
+
   # With filtering
   prod_vms = [for name, vm in var.vms : name if vm.memory >= 4096]
-  
+
   # Map transformation
   vm_memory_map = {
     for name, vm in var.vms :
     name => vm.memory
   }
-  
+
   # Complex transformation
   vm_configs = [
     for idx in range(var.instance_count) : {
@@ -277,14 +273,14 @@ locals {
   upper_env     = upper(var.environment)           # "DEV"
   lower_env     = lower(var.environment)           # "dev"
   title_env     = title(var.environment)           # "Dev"
-  
+
   # String formatting
   vm_name       = format("vm-%s-%03d", var.environment, 1)  # "vm-dev-001"
-  
+
   # String operations
   trimmed       = trim("  hello  ", " ")           # "hello"
   replaced      = replace("hello-world", "-", "_") # "hello_world"
-  
+
   # String splitting/joining
   parts         = split("-", "web-server-01")      # ["web", "server", "01"]
   joined        = join("-", ["web", "server"])     # "web-server"
@@ -298,20 +294,20 @@ locals {
   # List operations
   first_vm      = element(var.vm_list, 0)
   last_vm       = element(var.vm_list, length(var.vm_list) - 1)
-  
+
   # Terraform 1.9+ - Negative indices
   last_vm_new   = element(var.vm_list, -1)
-  
+
   # List manipulation
   unique_tags   = distinct(["web", "db", "web"])   # ["web", "db"]
   sorted_tags   = sort(["db", "web", "cache"])     # ["cache", "db", "web"]
-  
+
   # Map operations
   merged_tags   = merge(var.default_tags, var.custom_tags)
-  
+
   # Lookup with default
   instance_type = lookup(var.instance_types, var.environment, "t2.micro")
-  
+
   # Check membership
   is_prod       = contains(["prod", "production"], var.environment)
 }
@@ -324,11 +320,11 @@ locals {
   # Math operations
   max_memory    = max(2048, 4096, 8192)            # 8192
   min_memory    = min(2048, 4096, 8192)            # 2048
-  
+
   # Rounding
   rounded       = ceil(2.3)                        # 3
   floored       = floor(2.7)                       # 2
-  
+
   # Power
   memory_gb     = pow(2, 10)                       # 1024
 }
@@ -342,10 +338,10 @@ locals {
   string_num    = tostring(42)                     # "42"
   num_string    = tonumber("42")                   # 42
   bool_string   = tobool("true")                   # true
-  
+
   # Terraform 1.15+ - convert() function
   converted     = convert("42", number)            # 42
-  
+
   # Collection conversions
   list_set      = toset(["a", "b", "a"])          # ["a", "b"]
   map_list      = tolist(toset(["a", "b"]))       # ["a", "b"]
@@ -359,10 +355,10 @@ locals {
   # JSON encoding/decoding
   json_string   = jsonencode({ name = "vm", count = 3 })
   json_data     = jsondecode(file("config.json"))
-  
+
   # YAML decoding
   yaml_data     = yamldecode(file("config.yaml"))
-  
+
   # Base64 encoding/decoding
   encoded       = base64encode("hello")
   decoded       = base64decode(local.encoded)
@@ -379,7 +375,7 @@ locals {
     name = var.vm_name
     env  = var.environment
   })
-  
+
   # Path operations
   module_path   = path.module
   root_path     = path.root
@@ -393,7 +389,7 @@ locals {
 locals {
   # Current timestamp
   created_at    = timestamp()                      # "2024-01-15T10:30:00Z"
-  
+
   # Format timestamp
   formatted     = formatdate("YYYY-MM-DD", timestamp())
 }
@@ -422,7 +418,7 @@ variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
   default     = "dev"
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be dev, staging, or prod."
@@ -439,7 +435,7 @@ variable "vm_count" {
   description = "Number of VMs to create"
   type        = number
   default     = 2
-  
+
   validation {
     condition     = var.vm_count > 0 && var.vm_count <= 5
     error_message = "VM count must be between 1 and 5."
@@ -485,11 +481,11 @@ cat > locals.tf << 'EOF'
 locals {
   # Naming convention
   name_prefix = "${var.environment}-${var.project_name}"
-  
+
   # Get specs for current environment
   vm_memory = var.vm_specs[var.environment].memory
   vm_vcpu   = var.vm_specs[var.environment].vcpu
-  
+
   # Common tags
   common_tags = merge(
     var.tags,
@@ -500,7 +496,7 @@ locals {
       CreatedAt   = formatdate("YYYY-MM-DD", timestamp())
     }
   )
-  
+
   # Generate VM configurations using for expression
   vm_configs = {
     for idx in range(var.vm_count) :
@@ -511,7 +507,7 @@ locals {
       disk_size = 10737418240  # 10GB
     }
   }
-  
+
   # Tag string for metadata
   tag_string = join(",", [for k, v in local.common_tags : "${k}=${v}"])
 }
@@ -526,7 +522,7 @@ Create `main.tf`:
 cat > main.tf << 'EOF'
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
@@ -542,7 +538,7 @@ provider "libvirt" {
 # Create volumes using for_each
 resource "libvirt_volume" "vm_disk" {
   for_each = local.vm_configs
-  
+
   name   = "${each.value.name}-disk.qcow2"
   pool   = "default"
   size   = each.value.disk_size
@@ -552,26 +548,26 @@ resource "libvirt_volume" "vm_disk" {
 # Create VMs using for_each
 resource "libvirt_domain" "vm" {
   for_each = local.vm_configs
-  
+
   name   = each.value.name
   memory = each.value.memory
   vcpu   = each.value.vcpu
-  
+
   disk {
     volume_id = libvirt_volume.vm_disk[each.key].id
   }
-  
+
   network_interface {
     network_name   = "default"
     wait_for_lease = true
   }
-  
+
   console {
     type        = "pty"
     target_port = "0"
     target_type = "serial"
   }
-  
+
   graphics {
     type        = "spice"
     listen_type = "address"
@@ -587,12 +583,12 @@ resource "terraform_data" "vm_info" {
       # VM Inventory - ${var.environment} Environment
       # Generated: ${timestamp()}
       # Tags: ${local.tag_string}
-      
+
       ${join("\n", [for k, v in local.vm_configs : "- ${v.name}: ${v.memory}MB RAM, ${v.vcpu} vCPU"])}
       INVENTORY
     EOT
   }
-  
+
   triggers_replace = {
     vm_configs = jsonencode(local.vm_configs)
   }
@@ -867,7 +863,7 @@ Result: `environment = "prod"`
 locals {
   default_tags = { Environment = "dev", ManagedBy = "Terraform" }
   custom_tags  = { Owner = "TeamA", Environment = "prod" }
-  
+
   # Later values override earlier ones
   all_tags = merge(local.default_tags, local.custom_tags)
   # Result: { Environment = "prod", ManagedBy = "Terraform", Owner = "TeamA" }
@@ -877,7 +873,7 @@ locals {
 locals {
   list1 = ["a", "b"]
   list2 = ["c", "d"]
-  
+
   combined = concat(local.list1, local.list2)
   # Result: ["a", "b", "c", "d"]
 }
@@ -1072,11 +1068,11 @@ locals {
 
 You've mastered Terraform's data handling capabilities! You can now:
 
-✅ Define flexible input variables with validation  
-✅ Create informative outputs  
-✅ Use locals to simplify configurations  
-✅ Implement loops with count and for_each  
-✅ Apply functions to transform data  
+✅ Define flexible input variables with validation
+✅ Create informative outputs
+✅ Use locals to simplify configurations
+✅ Implement loops with count and for_each
+✅ Apply functions to transform data
 ✅ Build dynamic, reusable infrastructure code
 
 **Next Challenge**: Infrastructure Resources - Create networks, security groups, and VMs! 🚀

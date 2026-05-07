@@ -82,8 +82,17 @@ apt-get install -y \
     tree \
     git
 
+# Set bash as default shell for root user
+echo "Setting bash as default shell..."
+chsh -s /bin/bash root
+
 # Configure bash completion for Terraform
 terraform -install-autocomplete 2>/dev/null || true
+
+# Ensure .bashrc is sourced for interactive shells
+if ! grep -q "source ~/.bashrc" /root/.bash_profile 2>/dev/null; then
+    echo "source ~/.bashrc" >> /root/.bash_profile
+fi
 
 # Create welcome message
 cat > /etc/motd << 'EOF'

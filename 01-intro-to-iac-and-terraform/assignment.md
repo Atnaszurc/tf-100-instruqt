@@ -1,32 +1,29 @@
 ---
 slug: intro-to-iac-and-terraform
-id: tf101-intro-basics
+id: foh86dzsqmms
 type: challenge
-title: "Challenge 1: Introduction to IaC & Terraform Basics"
+title: 'Challenge 1: Introduction to IaC & Terraform Basics'
 teaser: Learn Infrastructure as Code fundamentals and write your first Terraform configuration
 notes:
 - type: text
-  contents: |
-    # Welcome to TF-100: Terraform Fundamentals! 🚀
-    
-    In this first challenge, you'll learn:
-    - What Infrastructure as Code (IaC) is and why it matters
-    - How Terraform works and its core concepts
-    - How to write and execute your first Terraform configuration
-    
-    **Estimated Time:** 1.5 hours
-    
-    Let's begin your Terraform journey!
+  contents: "# Welcome to TF-100: Terraform Fundamentals! \U0001F680\n\nIn this first
+    challenge, you'll learn:\n- What Infrastructure as Code (IaC) is and why it matters\n-
+    How Terraform works and its core concepts\n- How to write and execute your first
+    Terraform configuration\n\nLet's begin your Terraform
+    journey!\n"
 tabs:
-- title: Terminal
+- id: 9xjicnddy6d4
+  title: Terminal
   type: terminal
   hostname: workstation
-- title: Code Editor
+- id: j6xgiqozfq2m
+  title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-workspace
 difficulty: basic
 timelimit: 5400
+enhanced_loading: null
 ---
 
 # Challenge 1: Introduction to IaC & Terraform Basics
@@ -95,7 +92,7 @@ With Infrastructure as Code:
 resource "aws_instance" "web_server" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
-  
+
   tags = {
     Name        = "web-server"
     Environment = "development"
@@ -227,7 +224,7 @@ Every Terraform configuration needs:
 ```hcl
 terraform {
   required_version = ">= 1.14"
-  
+
   required_providers {
     local = {
       source  = "hashicorp/local"
@@ -325,7 +322,7 @@ cat > main.tf << 'EOF'
 
 terraform {
   required_version = ">= 1.14"
-  
+
   required_providers {
     local = {
       source  = "hashicorp/local"
@@ -349,7 +346,7 @@ resource "local_file" "info" {
     ==================
     Course: TF-101
     Topic: Introduction to IaC & Terraform Basics
-    
+
     This file was created by Terraform!
     Timestamp: ${timestamp()}
   EOT
@@ -363,7 +360,7 @@ resource "local_file" "config" {
     app_name = "terraform-training"
     version  = "1.0.0"
     environment = "development"
-    
+
     # Features
     enable_logging = true
     enable_metrics = true
@@ -699,12 +696,12 @@ resource "local_file" "example" {
 
 In this challenge, you:
 
-✅ Understood what Infrastructure as Code is and why it matters  
-✅ Learned Terraform's declarative approach  
-✅ Wrote your first Terraform configuration  
-✅ Used the complete Terraform workflow (init → plan → apply → destroy)  
-✅ Created resources with the `local` provider  
-✅ Understood Terraform state basics  
+✅ Understood what Infrastructure as Code is and why it matters
+✅ Learned Terraform's declarative approach
+✅ Wrote your first Terraform configuration
+✅ Used the complete Terraform workflow (init → plan → apply → destroy)
+✅ Created resources with the `local` provider
+✅ Understood Terraform state basics
 
 ### Key Concepts
 

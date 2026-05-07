@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+# Solve script for Challenge 2: Variables, Loops & Functions
+
+cd /root/terraform-lab
+
+# Copy the complete solution
+cp -r /root/terraform-lab-solutions/challenge-02/* .
+
+# Initialize and apply
+terraform init
+terraform apply -auto-approve
+
+echo "Challenge 2 solved successfully!"
