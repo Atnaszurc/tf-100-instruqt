@@ -1,0 +1,176 @@
+#!/bin/bash
+set -e
+
+# Challenge 4 Setup: State Management & CLI
+echo "Setting up Challenge 4: State Management & CLI..."
+
+# Clean workspace
+cd /root/terraform-lab
+terraform destroy -auto-approve 2>/dev/null || true
+rm -rf *
+rm -rf .terraform*
+rm -rf terraform.tfstate*
+
+# Create example solution in separate directory
+mkdir -p /root/terraform-lab-solutions/challenge-04
+cd /root/terraform-lab-solutions/challenge-04
+
+# Create main.tf
+cat > main.tf << 'EOF'
+terraform {
+  required_version = ">= 1.0"
+  
+  required_providers {
+    libvirt = {
+      source  = "dmacvicar/libvirt"
+      version = "~> 0.7"
+    }
+  }
+}
+
+provider "libvirt" {
+  uri = "qemu:///system"
+}
+
+# Simple VM for state practice
+resource "libvirt_volume" "disk" {
+  name   = "${terraform.workspace}-disk.qcow2"
+  pool   = "default"
+  size   = 10737418240
+  format = "qcow2"
+}
+
+resource "libvirt_domain" "vm" {
+  name   = "${terraform.workspace}-vm"
+  memory = terraform.workspace == "prod" ? 2048 : 1024
+  vcpu   = terraform.workspace == "prod" ? 2 : 1
+  
+  disk {
+    volume_id = libvirt_volume.disk.id
+  }
+  
+  network_interface {
+    network_name = "default"
+  }
+  
+  console {
+    type        = "pty"
+    target_type = "serial"
+    target_port = "0"
+  }
+}
+
+output "vm_info" {
+  value = {
+    name   = libvirt_domain.vm.name
+    memory = libvirt_domain.vm.memory
+    vcpu   = libvirt_domain.vm.vcpu
+    id     = libvirt_domain.vm.id
+  }
+}
+EOF
+
+# Create README
+cat > README.md << 'EOF'
+# Challenge 4 Solution
+
+State management and CLI practice configuration.
+
+## Key Commands
+
+### State Inspection
+```bash
+terraform state list
+terraform state show libvirt_domain.vm
+terraform show
+terraform show -json
+```
+
+### Workspaces
+```bash
+terraform workspace list
+terraform workspace new staging
+terraform workspace select staging
+terraform workspace show
+```
+
+### State Modification
+```bash
+# Always backup first!
+terraform state pull > backup.tfstate
+
+# Move resource
+terraform state mv old new
+
+# Remove resource
+terraform state rm resource
+```
+
+### Console
+```bash
+terraform console
+> terraform.workspace
+> libvirt_domain.vm.name
+> exit
+```
+
+### Debugging
+```bash
+export TF_LOG=DEBUG
+export TF_LOG_PATH=terraform.log
+terraform plan
+```
+
+## Workspace Behavior
+
+The configuration uses `terraform.workspace` to:
+- Name resources: `${terraform.workspace}-vm`
+- Adjust specs: prod gets more memory/CPU
+
+## Practice Exercises
+
+1. Create and switch between workspaces
+2. Inspect state in different workspaces
+3. Use console to explore data
+4. Practice state modification commands
+5. Enable debug logging
+EOF
+
+# Return to workspace
+cd /root/terraform-lab
+
+# Display welcome message
+cat << 'EOF'
+
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║            Challenge 4: State Management & CLI                 ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+In this challenge, you'll master Terraform's state system and CLI:
+
+  • Understanding and inspecting state
+  • State modification commands
+  • Workspaces for environment management
+  • Terraform console for interactive exploration
+  • Debugging with logging
+  • Import and state operations
+
+📁 Working Directory: /root/terraform-lab
+📚 Example Solution: /root/terraform-lab-solutions/challenge-04
+
+Key Skills:
+  • terraform state list/show/mv/rm
+  • terraform workspace new/select/list
+  • terraform console
+  • terraform import
+  • TF_LOG environment variables
+
+Follow the instructions in the assignment to complete the challenge!
+
+EOF
+
+echo "Challenge 4 setup complete!"
+
+# Made with Bob

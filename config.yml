@@ -1,0 +1,13 @@
+version: "3"
+virtualmachines:
+  - name: workstation
+    image: ubuntu2204
+    machine_type: n1-standard-4  # 4 vCPUs, 15GB RAM for nested virtualization
+    allow_external_ingress:
+      - hostname: workstation
+        ports:
+          - 80
+          - 443
+    nested_virtualization: true  # Enable for Libvirt/QEMU
+
+# Made with Bob

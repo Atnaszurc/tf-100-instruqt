@@ -1,0 +1,51 @@
+slug: tf-100-terraform-fundamentals
+title: "TF-100: Terraform Fundamentals"
+teaser: Master Terraform from zero to proficient with hands-on infrastructure provisioning
+description: |-
+  A comprehensive, self-service lab teaching Terraform fundamentals through hands-on exercises with real infrastructure.
+  
+  **What You'll Learn:**
+  - Write and execute Terraform configurations
+  - Use variables, loops, and functions
+  - Provision real VMs and networks with Libvirt
+  - Manage state and use CLI commands
+  - Debug Terraform issues independently
+  
+  **Prerequisites:**
+  - Understanding of IaC concepts (why IaC > click-ops)
+  - No Terraform experience required
+  
+  **Time:** ~8 hours (completable in one working day)
+  
+  **Features:**
+  - Pre-configured environment (Terraform + Libvirt)
+  - Step-by-step instructions
+  - Real-world scenarios
+  - Automatic validation
+  - Final skills assessment
+
+icon: https://storage.googleapis.com/instruqt-frontend/img/tracks/terraform.png
+tags:
+  - terraform
+  - infrastructure-as-code
+  - iac
+  - devops
+  - libvirt
+  - fundamentals
+  - beginner
+owner: hashicorp
+developers:
+  - your-email@example.com
+idle_timeout: 32400  # 9 hours in seconds
+timelimit: 32400     # 9 hours in seconds
+lab_config:
+  overlay: false
+  width: 33
+  position: right
+  feedback_recap_enabled: true
+  loadingMessages: true
+  hideStopButton: false
+skipping_enabled: true
+show_timer: true
+
+# Made with Bob

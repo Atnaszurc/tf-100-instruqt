@@ -1,0 +1,262 @@
+#!/bin/bash
+set -e
+
+# Challenge 3 Check: Infrastructure Resources
+echo "Validating Challenge 3 completion..."
+
+cd /root/terraform-lab
+
+# Check 1: Required files exist
+echo "✓ Checking for required files..."
+
+required_files=("main.tf" "network.tf" "storage.tf" "vms.tf" "outputs.tf" "cloud-init.tf")
+for file in "${required_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        fail-message "$file not found. Create all required infrastructure files."
+        exit 1
+    fi
+done
+
+# Check 2: Cloud-init YAML files exist
+echo "✓ Checking cloud-init configuration files..."
+
+cloud_init_files=("cloud-init-web.yaml" "cloud-init-app.yaml" "cloud-init-db.yaml")
+for file in "${cloud_init_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        fail-message "$file not found. Create cloud-init configurations for all VMs."
+        exit 1
+    fi
+done
+
+# Check 3: Terraform initialized
+echo "✓ Checking Terraform initialization..."
+
+if [ ! -d ".terraform" ]; then
+    fail-message "Terraform not initialized. Run 'terraform init' first."
+    exit 1
+fi
+
+# Check 4: Configuration is valid
+echo "✓ Validating Terraform configuration..."
+
+if ! terraform validate > /dev/null 2>&1; then
+    fail-message "Terraform configuration is invalid. Run 'terraform validate' to see errors."
+    exit 1
+fi
+
+# Check 5: Network configuration exists
+echo "✓ Checking network configuration..."
+
+if ! grep -q "resource \"libvirt_network\"" network.tf; then
+    fail-message "No libvirt_network resource found in network.tf. Define a custom network."
+    exit 1
+fi
+
+# Check 6: Storage configuration exists
+echo "✓ Checking storage configuration..."
+
+if ! grep -q "resource \"libvirt_volume\"" storage.tf; then
+    fail-message "No libvirt_volume resources found in storage.tf. Define storage volumes."
+    exit 1
+fi
+
+# Check 7: Base volume and derived volumes
+echo "✓ Checking base and derived volumes..."
+
+if ! grep -q "base_volume_id" storage.tf; then
+    fail-message "No base_volume_id references found. Use base volumes with derived volumes for efficiency."
+    exit 1
+fi
+
+# Check 8: Cloud-init disks defined
+echo "✓ Checking cloud-init disk resources..."
+
+if ! grep -q "resource \"libvirt_cloudinit_disk\"" cloud-init.tf; then
+    fail-message "No libvirt_cloudinit_disk resources found. Define cloud-init disks for VM configuration."
+    exit 1
+fi
+
+# Check 9: VMs defined
+echo "✓ Checking VM definitions..."
+
+vm_count=$(grep -c "resource \"libvirt_domain\"" vms.tf || echo "0")
+if [ "$vm_count" -lt 3 ]; then
+    fail-message "Expected at least 3 VM definitions, found $vm_count. Define web, app, and db VMs."
+    exit 1
+fi
+
+# Check 10: VMs use cloud-init
+echo "✓ Checking cloud-init integration..."
+
+if ! grep -q "cloudinit" vms.tf; then
+    fail-message "VMs don't use cloud-init. Add cloudinit attribute to VM definitions."
+    exit 1
+fi
+
+# Check 11: VMs use custom network
+echo "✓ Checking network integration..."
+
+if ! grep -q "network_id" vms.tf; then
+    fail-message "VMs don't reference custom network. Use network_id in network_interface blocks."
+    exit 1
+fi
+
+# Check 12: Outputs defined
+echo "✓ Checking output definitions..."
+
+if ! grep -q "output" outputs.tf; then
+    fail-message "No outputs defined in outputs.tf. Define outputs for VM IPs and infrastructure info."
+    exit 1
+fi
+
+# Check 13: Plan succeeds
+echo "✓ Checking Terraform plan..."
+
+if ! terraform plan -out=tfplan > /dev/null 2>&1; then
+    fail-message "Terraform plan failed. Fix configuration errors. Run 'terraform plan' to see details."
+    exit 1
+fi
+
+# Check 14: Apply succeeds
+echo "✓ Applying Terraform configuration (this may take 5-10 minutes)..."
+
+if ! terraform apply -auto-approve > apply.log 2>&1; then
+    fail-message "Terraform apply failed. Check apply.log for errors. Common issues: network conflicts, insufficient resources, or download failures."
+    exit 1
+fi
+
+# Check 15: Network was created
+echo "✓ Checking network creation..."
+
+if ! virsh net-list --all | grep -q "app-network"; then
+    fail-message "Custom network 'app-network' not found. Ensure network resource was created successfully."
+    exit 1
+fi
+
+# Check 16: Network is active
+echo "✓ Checking network status..."
+
+if ! virsh net-list | grep -q "app-network.*active"; then
+    fail-message "Network 'app-network' exists but is not active. Check network configuration."
+    exit 1
+fi
+
+# Check 17: VMs were created
+echo "✓ Checking VM creation..."
+
+expected_vms=("web-server" "app-server" "db-server")
+for vm in "${expected_vms[@]}"; do
+    if ! virsh list --all | grep -q "$vm"; then
+        fail-message "VM '$vm' not found. Ensure all three VMs were created."
+        exit 1
+    fi
+done
+
+# Check 18: VMs are running
+echo "✓ Checking VM status..."
+
+for vm in "${expected_vms[@]}"; do
+    if ! virsh list | grep -q "$vm.*running"; then
+        fail-message "VM '$vm' is not running. Check VM configuration and logs."
+        exit 1
+    fi
+done
+
+# Check 19: VMs have IP addresses
+echo "✓ Checking VM IP assignment..."
+
+sleep 30  # Give VMs time to get DHCP leases
+
+for vm in "${expected_vms[@]}"; do
+    if ! virsh net-dhcp-leases app-network | grep -q "$vm"; then
+        fail-message "VM '$vm' doesn't have an IP address. Check network configuration and wait_for_lease setting."
+        exit 1
+    fi
+done
+
+# Check 20: Outputs are available
+echo "✓ Checking outputs..."
+
+if ! terraform output > /dev/null 2>&1; then
+    fail-message "No outputs available. Ensure outputs.tf is properly configured."
+    exit 1
+fi
+
+# Check 21: VM IPs output exists
+echo "✓ Validating VM IP outputs..."
+
+if ! terraform output vm_ips > /dev/null 2>&1; then
+    fail-message "Output 'vm_ips' not available. Define this output in outputs.tf."
+    exit 1
+fi
+
+# Check 22: Infrastructure summary output exists
+echo "✓ Validating infrastructure summary..."
+
+if ! terraform output infrastructure_summary > /dev/null 2>&1; then
+    fail-message "Output 'infrastructure_summary' not available. Define this output in outputs.tf."
+    exit 1
+fi
+
+# Check 23: Volumes were created
+echo "✓ Checking storage volumes..."
+
+volume_count=$(virsh vol-list default | grep -c "qcow2" || echo "0")
+if [ "$volume_count" -lt 4 ]; then
+    fail-message "Expected at least 4 volumes (1 base + 3 derived), found $volume_count."
+    exit 1
+fi
+
+# Check 24: Cloud-init ISOs were created
+echo "✓ Checking cloud-init ISOs..."
+
+iso_count=$(virsh vol-list default | grep -c "\.iso" || echo "0")
+if [ "$iso_count" -lt 3 ]; then
+    fail-message "Expected 3 cloud-init ISO files, found $iso_count. Check cloud-init disk creation."
+    exit 1
+fi
+
+# All checks passed
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║                                                                ║"
+echo "║                  ✅ Challenge 3 Complete! ✅                   ║"
+echo "║                                                                ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Outstanding work! You've successfully built a complete infrastructure:"
+echo ""
+echo "  ✓ Created custom virtual network with NAT and DHCP"
+echo "  ✓ Configured storage with base and derived volumes"
+echo "  ✓ Deployed 3-tier application infrastructure"
+echo "  ✓ Automated VM configuration with cloud-init"
+echo "  ✓ Managed resource dependencies correctly"
+echo "  ✓ Exposed infrastructure information via outputs"
+echo ""
+echo "Infrastructure Summary:"
+terraform output infrastructure_summary | head -20
+echo ""
+echo "VM IP Addresses:"
+terraform output vm_ips
+echo ""
+echo "Key Skills Mastered:"
+echo "  • Virtual network creation and configuration"
+echo "  • Storage pool and volume management"
+echo "  • Base volume + derived volume pattern"
+echo "  • Cloud-init for automated VM setup"
+echo "  • Resource dependency management"
+echo "  • Complete infrastructure deployment"
+echo ""
+echo "💡 Tip: Your VMs are now running! Cloud-init is configuring them."
+echo "   Wait 2-3 minutes for services to start, then test:"
+echo ""
+echo "   WEB_IP=\$(terraform output -json vm_ips | jq -r '.web_server')"
+echo "   curl http://\$WEB_IP"
+echo ""
+echo "Next: Challenge 4 - State Management & CLI"
+echo "Master Terraform's state system and advanced CLI features!"
+echo ""
+
+exit 0
+
+# Made with Bob

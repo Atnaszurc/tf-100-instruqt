@@ -1,0 +1,329 @@
+#!/bin/bash
+set -e
+
+# Challenge 5 Check: Skills Assessment
+echo "Validating Challenge 5: Skills Assessment..."
+echo "This comprehensive check validates all requirements..."
+echo ""
+
+cd /root/terraform-lab
+
+# Initialize score
+SCORE=0
+MAX_SCORE=100
+
+# Check 1: Required files exist (5 points)
+echo "✓ Checking file organization (5 pts)..."
+required_files=(
+    "main.tf"
+    "variables.tf"
+    "locals.tf"
+    "network.tf"
+    "storage.tf"
+    "cloud-init.tf"
+    "vms.tf"
+    "outputs.tf"
+    "cloud-init-web.yaml"
+    "cloud-init-app.yaml"
+    "cloud-init-db.yaml"
+)
+
+files_exist=true
+for file in "${required_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "  ❌ Missing file: $file"
+        files_exist=false
+    fi
+done
+
+if [ "$files_exist" = true ]; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ All required files present (+5 pts)"
+else
+    fail-message "Missing required files. Create all files as specified in requirements."
+    exit 1
+fi
+
+# Check 2: Terraform initialized (required)
+echo "✓ Checking Terraform initialization..."
+if [ ! -d ".terraform" ]; then
+    fail-message "Terraform not initialized. Run 'terraform init' first."
+    exit 1
+fi
+
+# Check 3: Code formatting (5 points)
+echo "✓ Checking code formatting (5 pts)..."
+if terraform fmt -check -recursive > /dev/null 2>&1; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Code is properly formatted (+5 pts)"
+else
+    echo "  ⚠️  Code not formatted. Run 'terraform fmt -recursive' (0 pts)"
+fi
+
+# Check 4: Configuration validation (required)
+echo "✓ Validating configuration..."
+if ! terraform validate > /dev/null 2>&1; then
+    fail-message "Configuration is invalid. Run 'terraform validate' to see errors."
+    exit 1
+fi
+echo "  ✅ Configuration is valid"
+
+# Check 5: Variables defined with validation (10 points)
+echo "✓ Checking variable definitions (10 pts)..."
+var_score=0
+
+required_vars=("environment" "project_name" "network_cidr" "vm_specs" "tags")
+for var in "${required_vars[@]}"; do
+    if grep -q "variable \"$var\"" variables.tf; then
+        var_score=$((var_score + 1))
+    fi
+done
+
+if grep -q "validation {" variables.tf; then
+    var_score=$((var_score + 5))
+fi
+
+SCORE=$((SCORE + var_score))
+echo "  ✅ Variable definitions (+${var_score} pts)"
+
+# Check 6: Local values defined (5 points)
+echo "✓ Checking local values (5 pts)..."
+if grep -q "locals {" locals.tf && grep -q "terraform.workspace" locals.tf; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Local values with workspace usage (+5 pts)"
+else
+    echo "  ⚠️  Local values incomplete (0 pts)"
+fi
+
+# Check 7: Outputs defined (5 points)
+echo "✓ Checking outputs (5 pts)..."
+output_count=$(grep -c "^output" outputs.tf || echo "0")
+if [ "$output_count" -ge 5 ]; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Comprehensive outputs defined (+5 pts)"
+else
+    echo "  ⚠️  Need at least 5 outputs (0 pts)"
+fi
+
+# Check 8: Both workspaces exist (5 points)
+echo "✓ Checking workspaces (5 pts)..."
+if terraform workspace list | grep -q "dev" && terraform workspace list | grep -q "prod"; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Both dev and prod workspaces exist (+5 pts)"
+else
+    fail-message "Both 'dev' and 'prod' workspaces required. Create with 'terraform workspace new'."
+    exit 1
+fi
+
+# Check 9: Infrastructure deployed in dev (10 points)
+echo "✓ Checking dev workspace deployment (10 pts)..."
+terraform workspace select dev > /dev/null 2>&1
+
+if [ ! -f "terraform.tfstate.d/dev/terraform.tfstate" ] && [ ! -f "terraform.tfstate" ]; then
+    fail-message "Dev workspace not deployed. Run 'terraform apply' in dev workspace."
+    exit 1
+fi
+
+dev_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
+if [ "$dev_resources" -ge 8 ]; then
+    SCORE=$((SCORE + 10))
+    echo "  ✅ Dev infrastructure deployed (+10 pts)"
+else
+    echo "  ⚠️  Dev infrastructure incomplete (0 pts)"
+fi
+
+# Check 10: Infrastructure deployed in prod (10 points)
+echo "✓ Checking prod workspace deployment (10 pts)..."
+terraform workspace select prod > /dev/null 2>&1
+
+if [ ! -f "terraform.tfstate.d/prod/terraform.tfstate" ]; then
+    fail-message "Prod workspace not deployed. Run 'terraform apply' in prod workspace."
+    exit 1
+fi
+
+prod_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
+if [ "$prod_resources" -ge 8 ]; then
+    SCORE=$((SCORE + 10))
+    echo "  ✅ Prod infrastructure deployed (+10 pts)"
+else
+    echo "  ⚠️  Prod infrastructure incomplete (0 pts)"
+fi
+
+# Check 11: VMs running in dev (10 points)
+echo "✓ Checking dev VMs (10 pts)..."
+terraform workspace select dev > /dev/null 2>&1
+dev_vms=$(virsh list --all | grep -c "dev-" || echo "0")
+if [ "$dev_vms" -ge 3 ]; then
+    SCORE=$((SCORE + 10))
+    echo "  ✅ All 3 dev VMs running (+10 pts)"
+else
+    echo "  ⚠️  Expected 3 dev VMs, found $dev_vms (0 pts)"
+fi
+
+# Check 12: VMs running in prod (10 points)
+echo "✓ Checking prod VMs (10 pts)..."
+terraform workspace select prod > /dev/null 2>&1
+prod_vms=$(virsh list --all | grep -c "prod-" || echo "0")
+if [ "$prod_vms" -ge 3 ]; then
+    SCORE=$((SCORE + 10))
+    echo "  ✅ All 3 prod VMs running (+10 pts)"
+else
+    echo "  ⚠️  Expected 3 prod VMs, found $prod_vms (0 pts)"
+fi
+
+# Check 13: Network configuration (5 points)
+echo "✓ Checking network configuration (5 pts)..."
+if grep -q "resource \"libvirt_network\"" network.tf && \
+   grep -q "10.20.0.0/24" network.tf && \
+   grep -q "terraform.workspace" network.tf; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Network properly configured (+5 pts)"
+else
+    echo "  ⚠️  Network configuration incomplete (0 pts)"
+fi
+
+# Check 14: Storage with base volume pattern (5 points)
+echo "✓ Checking storage pattern (5 pts)..."
+if grep -q "base_volume_id" storage.tf; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Base + derived volume pattern used (+5 pts)"
+else
+    echo "  ⚠️  Base volume pattern not used (0 pts)"
+fi
+
+# Check 15: Cloud-init integration (10 points)
+echo "✓ Checking cloud-init integration (10 pts)..."
+cloudinit_score=0
+
+if grep -q "resource \"libvirt_cloudinit_disk\"" cloud-init.tf; then
+    cloudinit_score=$((cloudinit_score + 3))
+fi
+
+if grep -q "cloudinit" vms.tf; then
+    cloudinit_score=$((cloudinit_score + 3))
+fi
+
+if [ -f "cloud-init-web.yaml" ] && grep -q "nginx" cloud-init-web.yaml; then
+    cloudinit_score=$((cloudinit_score + 2))
+fi
+
+if [ -f "cloud-init-app.yaml" ] && grep -q "python" cloud-init-app.yaml; then
+    cloudinit_score=$((cloudinit_score + 2))
+fi
+
+SCORE=$((SCORE + cloudinit_score))
+echo "  ✅ Cloud-init integration (+${cloudinit_score} pts)"
+
+# Check 16: Workspace-aware naming (5 points)
+echo "✓ Checking workspace-aware naming (5 pts)..."
+if grep -q "terraform.workspace" vms.tf && \
+   grep -q "terraform.workspace" network.tf; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Resources use workspace in names (+5 pts)"
+else
+    echo "  ⚠️  Workspace-aware naming incomplete (0 pts)"
+fi
+
+# Check 17: Outputs working (5 points)
+echo "✓ Checking output functionality (5 pts)..."
+terraform workspace select prod > /dev/null 2>&1
+if terraform output > /dev/null 2>&1 && \
+   terraform output vm_ips > /dev/null 2>&1; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Outputs working correctly (+5 pts)"
+else
+    echo "  ⚠️  Outputs not working (0 pts)"
+fi
+
+# Check 18: Variable descriptions (5 points)
+echo "✓ Checking documentation (5 pts)..."
+desc_count=$(grep -c "description" variables.tf || echo "0")
+if [ "$desc_count" -ge 5 ]; then
+    SCORE=$((SCORE + 5))
+    echo "  ✅ Variables documented (+5 pts)"
+else
+    echo "  ⚠️  Variable descriptions incomplete (0 pts)"
+fi
+
+# Calculate final score
+PERCENTAGE=$((SCORE * 100 / MAX_SCORE))
+
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║                                                                ║"
+echo "║              Skills Assessment Complete!                       ║"
+echo "║                                                                ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+echo "📊 ASSESSMENT RESULTS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "  Final Score: $SCORE / $MAX_SCORE points ($PERCENTAGE%)"
+echo ""
+
+if [ "$SCORE" -ge 70 ]; then
+    echo "  🎉 STATUS: PASSED! 🎉"
+    echo ""
+    echo "  Excellent work! You've demonstrated mastery of:"
+    echo "    ✅ Infrastructure as Code principles"
+    echo "    ✅ Terraform configuration and best practices"
+    echo "    ✅ Variable management and validation"
+    echo "    ✅ Workspace usage for environments"
+    echo "    ✅ Cloud-init automation"
+    echo "    ✅ Resource organization and naming"
+    echo "    ✅ State management"
+    echo ""
+    echo "  🏆 ACHIEVEMENT UNLOCKED: Terraform Fundamentals Master!"
+    echo ""
+    echo "  You're now ready to:"
+    echo "    • Build production infrastructure with Terraform"
+    echo "    • Manage multiple environments effectively"
+    echo "    • Collaborate with teams using best practices"
+    echo "    • Continue to TF-200: Terraform Modules & Patterns"
+    echo ""
+else
+    echo "  ⚠️  STATUS: NEEDS IMPROVEMENT"
+    echo ""
+    echo "  Score: $SCORE / $MAX_SCORE (Need 70+ to pass)"
+    echo ""
+    echo "  Areas to improve:"
+    if [ "$files_exist" != true ]; then
+        echo "    • Complete all required files"
+    fi
+    if [ "$dev_resources" -lt 8 ]; then
+        echo "    • Deploy complete dev infrastructure"
+    fi
+    if [ "$prod_resources" -lt 8 ]; then
+        echo "    • Deploy complete prod infrastructure"
+    fi
+    if [ "$dev_vms" -lt 3 ]; then
+        echo "    • Ensure all dev VMs are running"
+    fi
+    if [ "$prod_vms" -lt 3 ]; then
+        echo "    • Ensure all prod VMs are running"
+    fi
+    echo ""
+    echo "  💡 Review previous challenges and try again!"
+    echo ""
+    fail-message "Score too low. Need 70+ points to pass. Current: $SCORE/$MAX_SCORE"
+    exit 1
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "🎓 TERRAFORM FUNDAMENTALS COMPLETE!"
+echo ""
+echo "You've successfully completed the TF-100 Fundamentals track!"
+echo ""
+echo "Next Steps:"
+echo "  1. Practice building more complex infrastructures"
+echo "  2. Explore Terraform modules and patterns (TF-200)"
+echo "  3. Learn about testing and validation (TF-300)"
+echo "  4. Master HCP Terraform and Enterprise features (TF-400)"
+echo ""
+echo "Keep building amazing infrastructure! 🚀"
+echo ""
+
+exit 0
+
+# Made with Bob

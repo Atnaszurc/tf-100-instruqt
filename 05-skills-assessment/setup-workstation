@@ -1,0 +1,77 @@
+#!/bin/bash
+set -e
+
+# Challenge 5 Setup: Skills Assessment
+echo "Setting up Challenge 5: Skills Assessment..."
+
+# Clean workspace thoroughly
+cd /root/terraform-lab
+terraform destroy -auto-approve 2>/dev/null || true
+
+# Clean all workspaces
+for ws in $(terraform workspace list 2>/dev/null | grep -v "default" | tr -d '*' | xargs); do
+    terraform workspace select default 2>/dev/null || true
+    terraform workspace delete "$ws" 2>/dev/null || true
+done
+
+# Clean files
+rm -rf *
+rm -rf .terraform*
+rm -rf terraform.tfstate*
+
+# Display welcome message
+cat << 'EOF'
+
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║              Challenge 5: Skills Assessment                    ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+This is your final challenge - a comprehensive assessment!
+
+🎯 YOUR MISSION:
+Build a complete multi-tier infrastructure for dev and prod environments.
+
+📋 REQUIREMENTS:
+  • Custom network (10.20.0.0/24)
+  • 3 VMs per environment (web, app, db)
+  • Cloud-init automated configuration
+  • Variables with validation
+  • Workspaces for dev and prod
+  • Comprehensive outputs
+  • Production-ready code
+
+⚠️  NO STEP-BY-STEP INSTRUCTIONS!
+You must design and implement the solution yourself using what you've learned.
+
+📚 RESOURCES AVAILABLE:
+  • Previous challenge solutions: /root/terraform-lab-solutions/
+  • Terraform documentation: terraform -help
+  • Your knowledge from Challenges 1-4
+
+💡 HINTS:
+  1. Start with main.tf and variables.tf
+  2. Create network and storage resources
+  3. Write cloud-init files
+  4. Create VM resources
+  5. Define outputs
+  6. Test in dev workspace first
+  7. Deploy to prod workspace
+
+⏱️  TIME LIMIT: 2 hours
+
+📁 Working Directory: /root/terraform-lab
+
+Read the assignment carefully and plan your approach!
+
+Good luck! You've got this! 💪
+
+EOF
+
+echo "Challenge 5 setup complete!"
+echo ""
+echo "📖 Read the full requirements in the assignment tab."
+echo "🚀 When ready, start building your solution!"
+
+# Made with Bob

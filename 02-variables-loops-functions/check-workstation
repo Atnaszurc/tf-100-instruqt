@@ -1,0 +1,245 @@
+#!/bin/bash
+set -e
+
+# Challenge 2 Check: Variables, Loops & Functions
+echo "Validating Challenge 2 completion..."
+
+cd /root/terraform-lab
+
+# Check 1: Required files exist
+echo "✓ Checking for required files..."
+
+if [ ! -f "variables.tf" ]; then
+    fail-message "variables.tf not found. Create this file with variable definitions."
+    exit 1
+fi
+
+if [ ! -f "locals.tf" ]; then
+    fail-message "locals.tf not found. Create this file with local value definitions."
+    exit 1
+fi
+
+if [ ! -f "main.tf" ]; then
+    fail-message "main.tf not found. Create this file with your infrastructure configuration."
+    exit 1
+fi
+
+if [ ! -f "outputs.tf" ]; then
+    fail-message "outputs.tf not found. Create this file with output definitions."
+    exit 1
+fi
+
+# Check 2: Terraform initialized
+echo "✓ Checking Terraform initialization..."
+
+if [ ! -d ".terraform" ]; then
+    fail-message "Terraform not initialized. Run 'terraform init' first."
+    exit 1
+fi
+
+# Check 3: Configuration is valid
+echo "✓ Validating Terraform configuration..."
+
+if ! terraform validate > /dev/null 2>&1; then
+    fail-message "Terraform configuration is invalid. Run 'terraform validate' to see errors."
+    exit 1
+fi
+
+# Check 4: Variables file contains required variables
+echo "✓ Checking variable definitions..."
+
+required_vars=("environment" "project_name" "vm_count" "vm_specs")
+for var in "${required_vars[@]}"; do
+    if ! grep -q "variable \"$var\"" variables.tf; then
+        fail-message "Variable '$var' not found in variables.tf. Define all required variables."
+        exit 1
+    fi
+done
+
+# Check 5: Variables have validation rules
+echo "✓ Checking variable validation..."
+
+if ! grep -q "validation {" variables.tf; then
+    fail-message "No validation blocks found in variables.tf. Add validation rules to your variables."
+    exit 1
+fi
+
+# Check 6: Locals file contains required locals
+echo "✓ Checking local values..."
+
+required_locals=("name_prefix" "vm_configs" "common_tags")
+for local_var in "${required_locals[@]}"; do
+    if ! grep -q "$local_var" locals.tf; then
+        fail-message "Local value '$local_var' not found in locals.tf. Define all required locals."
+        exit 1
+    fi
+done
+
+# Check 7: Main configuration uses for_each
+echo "✓ Checking for_each usage..."
+
+if ! grep -q "for_each" main.tf; then
+    fail-message "for_each not found in main.tf. Use for_each to create multiple resources."
+    exit 1
+fi
+
+# Check 8: Outputs file contains required outputs
+echo "✓ Checking output definitions..."
+
+required_outputs=("vm_names" "vm_details" "total_memory")
+for output in "${required_outputs[@]}"; do
+    if ! grep -q "output \"$output\"" outputs.tf; then
+        fail-message "Output '$output' not found in outputs.tf. Define all required outputs."
+        exit 1
+    fi
+done
+
+# Check 9: Outputs use for expressions
+echo "✓ Checking for expressions in outputs..."
+
+if ! grep -q "for.*in" outputs.tf; then
+    fail-message "No for expressions found in outputs.tf. Use for expressions to transform data."
+    exit 1
+fi
+
+# Check 10: Configuration uses functions
+echo "✓ Checking function usage..."
+
+functions_found=0
+
+# Check for common functions
+if grep -q "merge(" locals.tf || grep -q "merge(" main.tf; then
+    ((functions_found++))
+fi
+
+if grep -q "join(" locals.tf || grep -q "join(" main.tf || grep -q "join(" outputs.tf; then
+    ((functions_found++))
+fi
+
+if grep -q "formatdate(" locals.tf || grep -q "formatdate(" main.tf; then
+    ((functions_found++))
+fi
+
+if grep -q "sum(" outputs.tf; then
+    ((functions_found++))
+fi
+
+if [ $functions_found -lt 2 ]; then
+    fail-message "Not enough functions used. Use at least merge(), join(), formatdate(), and sum() in your configuration."
+    exit 1
+fi
+
+# Check 11: Plan succeeds
+echo "✓ Checking Terraform plan..."
+
+if ! terraform plan -out=tfplan > /dev/null 2>&1; then
+    fail-message "Terraform plan failed. Fix configuration errors before proceeding. Run 'terraform plan' to see details."
+    exit 1
+fi
+
+# Check 12: Resources will be created
+echo "✓ Checking planned resources..."
+
+plan_output=$(terraform show -json tfplan 2>/dev/null || echo "{}")
+
+# Check if plan contains resources to create
+if ! echo "$plan_output" | grep -q "resource_changes"; then
+    fail-message "No resources planned for creation. Ensure your configuration creates infrastructure."
+    exit 1
+fi
+
+# Check 13: Apply succeeds
+echo "✓ Applying Terraform configuration..."
+
+if ! terraform apply -auto-approve > /dev/null 2>&1; then
+    fail-message "Terraform apply failed. Check your configuration and try again. Run 'terraform apply' to see errors."
+    exit 1
+fi
+
+# Check 14: VMs were created
+echo "✓ Checking created VMs..."
+
+vm_count=$(virsh list --all --name | grep -c "dev-terraform-lab-vm" || true)
+
+if [ "$vm_count" -lt 2 ]; then
+    fail-message "Expected at least 2 VMs to be created, but found $vm_count. Check your vm_count variable and for_each configuration."
+    exit 1
+fi
+
+# Check 15: Inventory file was created
+echo "✓ Checking inventory file..."
+
+if [ ! -f "vm_inventory.txt" ]; then
+    fail-message "vm_inventory.txt not found. Ensure your terraform_data resource creates this file."
+    exit 1
+fi
+
+# Check 16: Outputs are available
+echo "✓ Checking outputs..."
+
+if ! terraform output > /dev/null 2>&1; then
+    fail-message "No outputs available. Ensure your outputs.tf is properly configured."
+    exit 1
+fi
+
+# Check 17: Specific outputs exist
+echo "✓ Validating output values..."
+
+if ! terraform output vm_names > /dev/null 2>&1; then
+    fail-message "Output 'vm_names' not available. Check your outputs.tf configuration."
+    exit 1
+fi
+
+if ! terraform output total_memory > /dev/null 2>&1; then
+    fail-message "Output 'total_memory' not available. Check your outputs.tf configuration."
+    exit 1
+fi
+
+# Check 18: Test with different variable values
+echo "✓ Testing variable flexibility..."
+
+if ! terraform plan -var="vm_count=3" > /dev/null 2>&1; then
+    fail-message "Configuration doesn't handle different vm_count values. Ensure your configuration is flexible."
+    exit 1
+fi
+
+# Check 19: Verify terraform console works
+echo "✓ Checking terraform console functionality..."
+
+if ! echo "var.environment" | terraform console > /dev/null 2>&1; then
+    fail-message "Terraform console not working properly. This might indicate configuration issues."
+    exit 1
+fi
+
+# All checks passed
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║                                                                ║"
+echo "║                  ✅ Challenge 2 Complete! ✅                   ║"
+echo "║                                                                ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Excellent work! You've successfully:"
+echo ""
+echo "  ✓ Defined input variables with validation"
+echo "  ✓ Created local values for computed expressions"
+echo "  ✓ Used for_each to create multiple resources"
+echo "  ✓ Applied for expressions to transform data"
+echo "  ✓ Used built-in functions (merge, join, formatdate, sum)"
+echo "  ✓ Created informative outputs"
+echo "  ✓ Built flexible, reusable infrastructure code"
+echo ""
+echo "Key Skills Mastered:"
+echo "  • Variable types and validation"
+echo "  • Local values and computed expressions"
+echo "  • Loops (for_each, for expressions)"
+echo "  • Built-in functions"
+echo "  • Output values"
+echo ""
+echo "Next: Challenge 3 - Infrastructure Resources"
+echo "Learn to create networks, security groups, and complete VM infrastructure!"
+echo ""
+
+exit 0
+
+# Made with Bob

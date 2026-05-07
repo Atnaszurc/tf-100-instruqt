@@ -1,0 +1,800 @@
+---
+slug: intro-to-iac-and-terraform
+id: tf101-intro-basics
+type: challenge
+title: "Challenge 1: Introduction to IaC & Terraform Basics"
+teaser: Learn Infrastructure as Code fundamentals and write your first Terraform configuration
+notes:
+- type: text
+  contents: |
+    # Welcome to TF-100: Terraform Fundamentals! 🚀
+    
+    In this first challenge, you'll learn:
+    - What Infrastructure as Code (IaC) is and why it matters
+    - How Terraform works and its core concepts
+    - How to write and execute your first Terraform configuration
+    
+    **Estimated Time:** 1.5 hours
+    
+    Let's begin your Terraform journey!
+tabs:
+- title: Terminal
+  type: terminal
+  hostname: workstation
+- title: Code Editor
+  type: code
+  hostname: workstation
+  path: /root/terraform-workspace
+difficulty: basic
+timelimit: 5400
+---
+
+# Challenge 1: Introduction to IaC & Terraform Basics
+
+## 🎯 What You'll Learn
+
+By the end of this challenge, you will be able to:
+
+- ✅ Explain what Infrastructure as Code (IaC) is and its benefits
+- ✅ Understand Terraform's declarative approach
+- ✅ Write basic Terraform configuration files
+- ✅ Use the Terraform CLI workflow (init, plan, apply, destroy)
+- ✅ Create resources using the `local` provider
+- ✅ Understand Terraform state management basics
+
+## ⏱️ Estimated Time
+
+**1.5 hours** - Take your time to understand each concept!
+
+## 💡 Why This Matters
+
+Infrastructure as Code is a fundamental skill for modern DevOps and Cloud Engineering. Instead of manually clicking through cloud consoles or running ad-hoc scripts, you'll learn to define infrastructure in code that can be:
+
+- **Version controlled** - Track changes over time
+- **Reviewed** - Team members can review before deployment
+- **Tested** - Validate before applying to production
+- **Reused** - Deploy the same infrastructure multiple times
+- **Automated** - Integrate with CI/CD pipelines
+
+**Real-World Example:** At companies like Netflix, Airbnb, and Uber, thousands of infrastructure resources are managed through Terraform, enabling teams to deploy safely and consistently across multiple environments.
+
+---
+
+## 📚 Part 1: Understanding Infrastructure as Code
+
+### What is Infrastructure as Code?
+
+**Infrastructure as Code (IaC)** is the practice of managing and provisioning infrastructure through machine-readable definition files, rather than manual processes or interactive configuration tools.
+
+### The Traditional Way (Manual) ❌
+
+Imagine you need to create a development environment:
+
+1. Log into cloud console
+2. Click "Create VM"
+3. Fill out form (name, size, region, etc.)
+4. Click "Create Network"
+5. Configure security rules manually
+6. Repeat for each environment (dev, staging, prod)
+7. Document what you did (maybe)
+8. Hope you remember the exact steps next time
+
+**Problems:**
+- ⚠️ Time-consuming and error-prone
+- ⚠️ Hard to replicate exactly
+- ⚠️ No version history
+- ⚠️ Difficult to review changes
+- ⚠️ Manual documentation often outdated
+
+### The IaC Way (Automated) ✅
+
+With Infrastructure as Code:
+
+```hcl
+# infrastructure.tf
+resource "aws_instance" "web_server" {
+  ami           = "ami-12345678"
+  instance_type = "t2.micro"
+  
+  tags = {
+    Name        = "web-server"
+    Environment = "development"
+  }
+}
+```
+
+**Benefits:**
+- ✅ Consistent and repeatable
+- ✅ Version controlled (Git)
+- ✅ Code review process
+- ✅ Automated testing
+- ✅ Self-documenting
+- ✅ Fast deployment
+
+### Declarative vs Imperative
+
+**Imperative** (How to do it):
+```bash
+# Step-by-step commands
+create_vm --name web1 --size small
+create_network --name vpc1
+attach_vm_to_network --vm web1 --network vpc1
+```
+
+**Declarative** (What you want):
+```hcl
+# Desired end state
+resource "vm" "web1" {
+  size    = "small"
+  network = "vpc1"
+}
+```
+
+Terraform is **declarative** - you describe the desired state, and Terraform figures out how to achieve it.
+
+---
+
+## 🚀 Part 2: What is Terraform?
+
+### Overview
+
+**Terraform** is an open-source Infrastructure as Code tool created by HashiCorp. It allows you to define infrastructure in human-readable configuration files that you can version, reuse, and share.
+
+### Key Features
+
+#### 1. Multi-Cloud Support
+Terraform works with 3000+ providers:
+- Cloud: AWS, Azure, GCP, Oracle Cloud
+- SaaS: GitHub, Datadog, PagerDuty
+- Infrastructure: Kubernetes, VMware, Libvirt
+
+#### 2. Declarative Syntax
+You describe **what** you want, not **how** to create it:
+```hcl
+resource "local_file" "example" {
+  content  = "Hello, Terraform!"
+  filename = "hello.txt"
+}
+```
+
+#### 3. State Management
+Terraform tracks your infrastructure in a **state file**, knowing what exists and what needs to change.
+
+#### 4. Plan Before Apply
+Preview changes before making them:
+```bash
+terraform plan  # Shows what will change
+terraform apply # Actually makes the changes
+```
+
+#### 5. Resource Graph
+Terraform automatically determines the correct order to create resources based on dependencies.
+
+### Terraform Workflow
+
+```
+┌─────────────┐
+│   Write     │  Write .tf configuration files
+│   Code      │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  terraform  │  Download required providers
+│    init     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  terraform  │  Preview changes
+│    plan     │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  terraform  │  Create/update infrastructure
+│    apply    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  terraform  │  Remove infrastructure (when needed)
+│   destroy   │
+└─────────────┘
+```
+
+---
+
+## 🔌 Part 3: Terraform Providers
+
+### What is a Provider?
+
+A **provider** is a plugin that enables Terraform to interact with an API. Each provider adds a set of resource types and data sources that Terraform can manage.
+
+Examples:
+- `aws` provider → Manage AWS resources
+- `azurerm` provider → Manage Azure resources
+- `local` provider → Manage local files (what we'll use today)
+- `libvirt` provider → Manage VMs (we'll use this later)
+
+### Provider Configuration
+
+Every Terraform configuration needs:
+
+1. **Terraform block** - Specifies Terraform and provider versions
+2. **Provider block** - Configures the provider
+
+```hcl
+terraform {
+  required_version = ">= 1.14"
+  
+  required_providers {
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.7"
+    }
+  }
+}
+
+provider "local" {
+  # Configuration options (if any)
+}
+```
+
+⚠️ **Common Pitfall:** Forgetting the `terraform` block leads to version inconsistencies across team members.
+
+---
+
+## 📝 Part 4: Your First Terraform Configuration
+
+### Terraform File Structure
+
+```
+project/
+├── main.tf              # Main configuration
+├── variables.tf         # Input variables (optional)
+├── outputs.tf           # Output values (optional)
+├── .terraform/          # Provider plugins (created by init)
+├── .terraform.lock.hcl  # Provider version lock (created by init)
+└── terraform.tfstate    # State file (created by apply)
+```
+
+For this lab, we'll keep it simple with just `main.tf`.
+
+### Resource Block Anatomy
+
+```hcl
+resource "PROVIDER_TYPE" "NAME" {
+  argument1 = "value1"
+  argument2 = "value2"
+}
+```
+
+- `resource` - Keyword declaring a resource
+- `PROVIDER_TYPE` - Type of resource (e.g., `local_file`, `aws_instance`)
+- `NAME` - Logical name you choose (used to reference this resource)
+- Arguments - Configuration specific to the resource type
+
+**Example:**
+```hcl
+resource "local_file" "hello" {
+  content  = "Hello, Terraform!"
+  filename = "${path.module}/hello.txt"
+}
+```
+
+### Special Expressions
+
+#### `${path.module}`
+- Returns the filesystem path of the current module
+- Ensures files are created in the correct directory
+- Example: `"${path.module}/hello.txt"` → `./hello.txt`
+
+#### Heredoc Syntax (`<<-EOT`)
+For multi-line strings:
+```hcl
+content = <<-EOT
+  Line 1
+  Line 2
+  Line 3
+EOT
+```
+
+---
+
+## 🧪 Part 5: Hands-On Lab
+
+Now let's put theory into practice! You'll create your first Terraform configuration.
+
+### Step 1: Navigate to Workspace
+
+Your environment is pre-configured with Terraform and all necessary tools.
+
+```bash
+cd /root/terraform-workspace
+```
+
+### Step 2: Create Your First Configuration
+
+Create a file named `main.tf`:
+
+```bash
+cat > main.tf << 'EOF'
+# My First Terraform Configuration
+# TF-101: Introduction to IaC & Terraform Basics
+
+terraform {
+  required_version = ">= 1.14"
+  
+  required_providers {
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.7"
+    }
+  }
+}
+
+provider "local" {}
+
+# Resource 1: Simple greeting file
+resource "local_file" "hello" {
+  content  = "Hello, Terraform! This is my first infrastructure as code."
+  filename = "${path.module}/hello.txt"
+}
+
+# Resource 2: Training information with heredoc
+resource "local_file" "info" {
+  content  = <<-EOT
+    Terraform Training
+    ==================
+    Course: TF-101
+    Topic: Introduction to IaC & Terraform Basics
+    
+    This file was created by Terraform!
+    Timestamp: ${timestamp()}
+  EOT
+  filename = "${path.module}/info.txt"
+}
+
+# Resource 3: Configuration file
+resource "local_file" "config" {
+  content  = <<-EOT
+    # Application Configuration
+    app_name = "terraform-training"
+    version  = "1.0.0"
+    environment = "development"
+    
+    # Features
+    enable_logging = true
+    enable_metrics = true
+  EOT
+  filename = "${path.module}/app-config.txt"
+}
+
+# Outputs: Display information about created resources
+output "hello_file_id" {
+  description = "ID of the hello.txt file"
+  value       = local_file.hello.id
+}
+
+output "all_files" {
+  description = "List of all created files"
+  value = [
+    local_file.hello.filename,
+    local_file.info.filename,
+    local_file.config.filename
+  ]
+}
+EOF
+```
+
+**💡 What's in this configuration?**
+- **Terraform block**: Specifies required Terraform version and providers
+- **Provider block**: Configures the local provider
+- **3 Resources**: Creates three different text files
+- **2 Outputs**: Displays information after apply
+
+### Step 3: Initialize Terraform
+
+This downloads the required provider plugins:
+
+```bash
+terraform init
+```
+
+**Expected Output:**
+```
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/local versions matching "~> 2.7"...
+- Installing hashicorp/local v2.7.x...
+- Installed hashicorp/local v2.7.x
+
+Terraform has been successfully initialized!
+```
+
+**What happened?**
+- ✅ Downloaded the `local` provider plugin
+- ✅ Created `.terraform/` directory
+- ✅ Created `.terraform.lock.hcl` file (locks provider versions)
+
+💡 **Tip:** Run `ls -la` to see the new files created.
+
+### Step 4: Preview Changes with Plan
+
+Before making any changes, let's see what Terraform will do:
+
+```bash
+terraform plan
+```
+
+**Expected Output:**
+```
+Terraform will perform the following actions:
+
+  # local_file.config will be created
+  + resource "local_file" "config" {
+      + content  = <<-EOT
+            # Application Configuration
+            app_name = "terraform-training"
+            ...
+        EOT
+      + filename = "./app-config.txt"
+      + id       = (known after apply)
+    }
+
+  # local_file.hello will be created
+  + resource "local_file" "hello" {
+      + content  = "Hello, Terraform! This is my first infrastructure as code."
+      + filename = "./hello.txt"
+      + id       = (known after apply)
+    }
+
+  # local_file.info will be created
+  + resource "local_file" "info" {
+      + content  = <<-EOT
+            Terraform Training
+            ...
+        EOT
+      + filename = "./info.txt"
+      + id       = (known after apply)
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+```
+
+**Understanding the Output:**
+- `+` symbol = Resource will be **created**
+- `~` symbol = Resource will be **modified** (you'll see this later)
+- `-` symbol = Resource will be **destroyed**
+- `(known after apply)` = Value determined during creation
+
+### Step 5: Apply Changes
+
+Now let's actually create the resources:
+
+```bash
+terraform apply
+```
+
+You'll see the plan again, then a prompt:
+```
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value:
+```
+
+Type `yes` and press Enter.
+
+**Expected Output:**
+```
+local_file.hello: Creating...
+local_file.info: Creating...
+local_file.config: Creating...
+local_file.hello: Creation complete after 0s [id=...]
+local_file.info: Creation complete after 0s [id=...]
+local_file.config: Creation complete after 0s [id=...]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+all_files = [
+  "./hello.txt",
+  "./info.txt",
+  "./app-config.txt",
+]
+hello_file_id = "..."
+```
+
+🎉 **Congratulations!** You just created your first infrastructure with Terraform!
+
+### Step 6: Verify Resources Created
+
+Let's check that the files were actually created:
+
+```bash
+ls -la *.txt
+```
+
+You should see:
+- `hello.txt`
+- `info.txt`
+- `app-config.txt`
+
+View the contents:
+
+```bash
+cat hello.txt
+cat info.txt
+cat app-config.txt
+```
+
+### Step 7: Understand Terraform State
+
+Terraform created a `terraform.tfstate` file. This tracks what infrastructure exists:
+
+```bash
+cat terraform.tfstate
+```
+
+You'll see JSON containing information about your resources.
+
+⚠️ **Important:** The state file is critical! It's how Terraform knows what it manages. In real projects, this is stored remotely (we'll learn about that later).
+
+You can also view state in a readable format:
+
+```bash
+terraform show
+```
+
+### Step 8: Make a Change
+
+Let's modify our configuration. Edit `main.tf` and change the hello file content:
+
+```bash
+# Update the hello resource
+sed -i 's/Hello, Terraform!/Hello, Terraform World!/' main.tf
+```
+
+Or manually edit the file in the Code Editor tab.
+
+Now run plan again:
+
+```bash
+terraform plan
+```
+
+Notice the output shows:
+```
+  # local_file.hello must be replaced
+-/+ resource "local_file" "hello" {
+      ~ content  = "Hello, Terraform! ..." -> "Hello, Terraform World! ..."
+        filename = "./hello.txt"
+      ~ id       = "..." -> (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+```
+
+The `~` shows what changed, and `-/+` means the resource will be replaced (destroyed and recreated).
+
+Apply the change:
+
+```bash
+terraform apply -auto-approve
+```
+
+💡 **Tip:** `-auto-approve` skips the confirmation prompt (use carefully!).
+
+### Step 9: Destroy Resources
+
+When you're done, clean up:
+
+```bash
+terraform destroy
+```
+
+Confirm with `yes`.
+
+**Expected Output:**
+```
+local_file.hello: Destroying... [id=...]
+local_file.info: Destroying... [id=...]
+local_file.config: Destroying... [id=...]
+local_file.hello: Destruction complete after 0s
+local_file.info: Destruction complete after 0s
+local_file.config: Destruction complete after 0s
+
+Destroy complete! Resources: 3 destroyed.
+```
+
+Verify files are gone:
+
+```bash
+ls -la *.txt
+# Should show "No such file or directory"
+```
+
+---
+
+## ✅ Knowledge Check
+
+Test your understanding with these questions:
+
+### Question 1: What is Infrastructure as Code?
+<details>
+<summary>Click to reveal answer</summary>
+
+**Answer:** Infrastructure as Code (IaC) is the practice of managing and provisioning infrastructure through machine-readable definition files, rather than manual processes. It allows infrastructure to be version controlled, tested, and automated.
+
+**Key Benefits:**
+- Consistency and repeatability
+- Version control and history
+- Code review process
+- Automated testing
+- Self-documenting
+</details>
+
+### Question 2: What does "declarative" mean in Terraform?
+<details>
+<summary>Click to reveal answer</summary>
+
+**Answer:** Declarative means you describe the **desired end state** of your infrastructure, not the steps to achieve it. Terraform figures out what actions are needed to reach that state.
+
+**Example:**
+```hcl
+# You declare what you want
+resource "local_file" "example" {
+  content  = "Hello"
+  filename = "hello.txt"
+}
+# Terraform figures out how to create it
+```
+</details>
+
+### Question 3: What is a Terraform provider?
+<details>
+<summary>Click to reveal answer</summary>
+
+**Answer:** A provider is a plugin that enables Terraform to interact with an API. It adds resource types and data sources that Terraform can manage.
+
+**Examples:**
+- `aws` - Manages AWS resources
+- `local` - Manages local files
+- `kubernetes` - Manages Kubernetes resources
+</details>
+
+### Question 4: What does `terraform init` do?
+<details>
+<summary>Click to reveal answer</summary>
+
+**Answer:** `terraform init` initializes a Terraform working directory by:
+1. Downloading required provider plugins
+2. Creating the `.terraform/` directory
+3. Creating the `.terraform.lock.hcl` lock file
+4. Initializing the backend (state storage)
+
+**You must run this before any other Terraform commands!**
+</details>
+
+### Question 5: What's the difference between `plan` and `apply`?
+<details>
+<summary>Click to reveal answer</summary>
+
+**Answer:**
+- **`terraform plan`**: Shows what changes Terraform **would** make (preview only, no changes)
+- **`terraform apply`**: Actually **makes** the changes to your infrastructure
+
+**Best Practice:** Always run `plan` before `apply` to review changes!
+</details>
+
+---
+
+## 🎓 Summary
+
+### What You Learned
+
+In this challenge, you:
+
+✅ Understood what Infrastructure as Code is and why it matters  
+✅ Learned Terraform's declarative approach  
+✅ Wrote your first Terraform configuration  
+✅ Used the complete Terraform workflow (init → plan → apply → destroy)  
+✅ Created resources with the `local` provider  
+✅ Understood Terraform state basics  
+
+### Key Concepts
+
+- **IaC**: Managing infrastructure through code
+- **Declarative**: Describe what you want, not how to get it
+- **Provider**: Plugin that enables Terraform to manage resources
+- **Resource**: A piece of infrastructure (file, VM, network, etc.)
+- **State**: Terraform's record of managed infrastructure
+- **Workflow**: init → plan → apply → destroy
+
+### Commands You Learned
+
+```bash
+terraform init      # Initialize working directory
+terraform plan      # Preview changes
+terraform apply     # Create/update infrastructure
+terraform show      # Display current state
+terraform destroy   # Remove all managed infrastructure
+```
+
+---
+
+## 🚀 What's Next?
+
+In **Challenge 2**, you'll learn about:
+- Variables and input values
+- Loops with `count` and `for_each`
+- Built-in functions
+- For expressions (list/map comprehensions)
+
+---
+
+## 💡 Common Pitfalls to Avoid
+
+⚠️ **Forgetting `terraform init`**
+- Always run `init` first in a new directory
+- Re-run if you add new providers
+
+⚠️ **Not reviewing `plan` output**
+- Always check what will change before applying
+- Unexpected changes? Investigate before proceeding
+
+⚠️ **Deleting state files**
+- Never manually delete `terraform.tfstate`
+- Terraform loses track of your infrastructure
+
+⚠️ **Hardcoding values**
+- Use variables instead (you'll learn this next!)
+- Makes configurations reusable
+
+---
+
+## 🆘 Troubleshooting
+
+### "terraform: command not found"
+**Solution:** Terraform is pre-installed. Try:
+```bash
+which terraform
+terraform version
+```
+
+### "Error: Failed to query available provider packages"
+**Solution:** Check internet connectivity or provider source:
+```bash
+terraform init -upgrade
+```
+
+### "Error: Inconsistent dependency lock file"
+**Solution:** Update the lock file:
+```bash
+terraform init -upgrade
+```
+
+### Files not created after apply
+**Solution:** Check you're in the right directory:
+```bash
+pwd
+ls -la
+```
+
+---
+
+## 📚 Additional Resources
+
+- [Terraform Documentation](https://www.terraform.io/docs)
+- [Terraform Registry](https://registry.terraform.io/)
+- [HashiCorp Learn](https://learn.hashicorp.com/terraform)
+
+---
+
+**🎉 Congratulations on completing Challenge 1!**
+
+Click **Check** to validate your work and proceed to the next challenge.

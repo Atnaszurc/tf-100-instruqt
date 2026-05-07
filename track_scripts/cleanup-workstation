@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Track-level cleanup script for TF-100 Fundamentals Lab
+# This runs when the track ends
+
+echo "=== Cleaning up TF-100 Lab Environment ==="
+
+# Stop and destroy any running VMs
+echo "Stopping Libvirt VMs..."
+for vm in $(virsh list --name); do
+    if [ -n "$vm" ]; then
+        virsh destroy "$vm" 2>/dev/null || true
+        virsh undefine "$vm" 2>/dev/null || true
+    fi
+done
+
+# Clean up Terraform state and files
+echo "Cleaning up Terraform files..."
+cd /root/terraform-workspace 2>/dev/null || true
+find . -type d -name ".terraform" -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.tfstate*" -delete 2>/dev/null || true
+find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true
+
+# Stop libvirt
+echo "Stopping Libvirt..."
+systemctl stop libvirtd 2>/dev/null || true
+
+echo "✓ Cleanup complete!"
+
+exit 0
+
+# Made with Bob

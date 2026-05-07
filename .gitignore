@@ -1,0 +1,28 @@
+# Terraform
+.terraform
+.terraform.lock.hcl
+*.tfvars
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Instruqt
+.instruqt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Made with Bob

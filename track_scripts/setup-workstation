@@ -1,0 +1,131 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Track-level setup script for TF-100 Fundamentals Lab
+# This runs once when the track starts
+
+echo "=== TF-100 Terraform Fundamentals Lab Setup ==="
+echo "Setting up your learning environment..."
+
+# Update system
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+
+# Install prerequisites
+echo "Installing prerequisites..."
+apt-get install -y \
+    wget \
+    curl \
+    unzip \
+    gnupg \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    lsb-release
+
+# Install Terraform (latest stable)
+echo "Installing Terraform..."
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+apt-get update -y
+apt-get install -y terraform
+
+# Verify Terraform installation
+terraform version
+
+# Install Libvirt and QEMU for nested virtualization
+echo "Installing Libvirt and QEMU..."
+apt-get install -y \
+    qemu-kvm \
+    libvirt-daemon-system \
+    libvirt-clients \
+    bridge-utils \
+    virtinst \
+    virt-manager \
+    cpu-checker
+
+# Enable and start libvirt
+systemctl enable libvirtd
+systemctl start libvirtd
+
+# Verify nested virtualization support
+if kvm-ok; then
+    echo "✓ KVM/nested virtualization is supported"
+else
+    echo "⚠ Warning: KVM may not be fully supported"
+fi
+
+# Add default user to libvirt group
+usermod -aG libvirt $(whoami) || true
+
+# Install Terraform Libvirt provider dependencies
+echo "Installing Libvirt provider dependencies..."
+apt-get install -y \
+    libvirt-dev \
+    pkg-config
+
+# Create workspace directory
+mkdir -p /root/terraform-workspace
+cd /root/terraform-workspace
+
+# Set up default libvirt network
+virsh net-list --all | grep -q default || virsh net-define /usr/share/libvirt/networks/default.xml
+virsh net-start default 2>/dev/null || true
+virsh net-autostart default
+
+# Install helpful tools
+echo "Installing additional tools..."
+apt-get install -y \
+    vim \
+    nano \
+    jq \
+    tree \
+    git
+
+# Configure bash completion for Terraform
+terraform -install-autocomplete 2>/dev/null || true
+
+# Create welcome message
+cat > /etc/motd << 'EOF'
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║   🚀 TF-100: Terraform Fundamentals Lab                     ║
+║                                                              ║
+║   Welcome! Your environment is ready to go.                 ║
+║                                                              ║
+║   📚 What's Included:                                        ║
+║   • Terraform (latest stable)                               ║
+║   • Libvirt/QEMU (nested virtualization enabled)            ║
+║   • Code editor with syntax highlighting                    ║
+║   • All example code pre-populated                          ║
+║                                                              ║
+║   💡 Tips:                                                   ║
+║   • Use both Terminal and Code Editor tabs                  ║
+║   • Read instructions carefully                             ║
+║   • Experiment and learn by doing                           ║
+║   • Use 'terraform console' to test expressions             ║
+║                                                              ║
+║   ⏱️  Time: ~8 hours | 9-hour timeout                       ║
+║   🔄 Skip enabled: Restart at any challenge                 ║
+║                                                              ║
+║   Ready to master Terraform? Let's begin! 🎯                ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+EOF
+
+# Display versions
+echo ""
+echo "=== Environment Ready ==="
+echo "Terraform version: $(terraform version -json | jq -r '.terraform_version')"
+echo "Libvirt version: $(virsh version | head -n1)"
+echo "QEMU version: $(qemu-system-x86_64 --version | head -n1)"
+echo ""
+echo "✓ Setup complete! Your learning environment is ready."
+echo ""
+
+# Set working directory
+cd /root/terraform-workspace
+
+exit 0
+
+# Made with Bob

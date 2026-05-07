@@ -1,0 +1,140 @@
+#!/bin/bash
+set -eo pipefail
+
+# Challenge 1 Check: Introduction to IaC & Terraform Basics
+# This validates that the user completed the challenge correctly
+
+echo "Validating Challenge 1 completion..."
+
+# Change to workspace directory
+cd /root/terraform-workspace || {
+    echo "❌ Error: Workspace directory not found"
+    echo "💡 Hint: Make sure you're working in /root/terraform-workspace"
+    exit 1
+}
+
+# Check 1: main.tf exists
+if [ ! -f "main.tf" ]; then
+    echo "❌ Error: main.tf file not found"
+    echo "💡 Hint: Create a main.tf file with your Terraform configuration"
+    echo "📚 Review: Part 4 of the assignment for file structure"
+    exit 1
+fi
+echo "✓ main.tf file exists"
+
+# Check 2: Terraform block exists with required version
+if ! grep -q "terraform {" main.tf; then
+    echo "❌ Error: terraform block not found in main.tf"
+    echo "💡 Hint: Add a terraform block with required_version and required_providers"
+    echo "📚 Review: Part 3 - Provider Configuration section"
+    exit 1
+fi
+echo "✓ terraform block found"
+
+# Check 3: Provider configuration exists
+if ! grep -q "provider \"local\"" main.tf; then
+    echo "❌ Error: local provider not configured"
+    echo "💡 Hint: Add 'provider \"local\" {}' to your configuration"
+    echo "📚 Review: Part 3 - Provider Configuration section"
+    exit 1
+fi
+echo "✓ local provider configured"
+
+# Check 4: At least one resource exists
+if ! grep -q "resource \"local_file\"" main.tf; then
+    echo "❌ Error: No local_file resources found"
+    echo "💡 Hint: Create at least one local_file resource"
+    echo "📚 Review: Part 5 - Hands-On Lab, Step 2"
+    exit 1
+fi
+echo "✓ local_file resource(s) defined"
+
+# Check 5: Terraform has been initialized
+if [ ! -d ".terraform" ]; then
+    echo "❌ Error: Terraform not initialized"
+    echo "💡 Hint: Run 'terraform init' to initialize your configuration"
+    echo "📚 Review: Part 5 - Step 3 (Initialize Terraform)"
+    exit 1
+fi
+echo "✓ Terraform initialized (.terraform directory exists)"
+
+# Check 6: Lock file exists
+if [ ! -f ".terraform.lock.hcl" ]; then
+    echo "❌ Error: Provider lock file not found"
+    echo "💡 Hint: Run 'terraform init' to create the lock file"
+    echo "📚 Review: Part 5 - Step 3 (Initialize Terraform)"
+    exit 1
+fi
+echo "✓ Provider lock file exists"
+
+# Check 7: Terraform configuration is valid
+if ! terraform validate > /dev/null 2>&1; then
+    echo "❌ Error: Terraform configuration is invalid"
+    echo "💡 Hint: Run 'terraform validate' to see specific errors"
+    echo "📚 Common issues:"
+    echo "   - Missing closing braces"
+    echo "   - Typos in resource or argument names"
+    echo "   - Missing required arguments"
+    exit 1
+fi
+echo "✓ Terraform configuration is valid"
+
+# Check 8: Resources have been applied (state file exists)
+if [ ! -f "terraform.tfstate" ]; then
+    echo "❌ Error: No state file found - resources not applied"
+    echo "💡 Hint: Run 'terraform apply' to create your resources"
+    echo "📚 Review: Part 5 - Step 5 (Apply Changes)"
+    exit 1
+fi
+echo "✓ State file exists (resources have been applied)"
+
+# Check 9: State file contains resources
+RESOURCE_COUNT=$(terraform show -json 2>/dev/null | jq -r '.values.root_module.resources | length' 2>/dev/null || echo "0")
+if [ "$RESOURCE_COUNT" -eq 0 ]; then
+    echo "❌ Error: No resources found in state"
+    echo "💡 Hint: Make sure you ran 'terraform apply' successfully"
+    echo "📚 Review: Part 5 - Step 5 (Apply Changes)"
+    exit 1
+fi
+echo "✓ Resources exist in state (count: $RESOURCE_COUNT)"
+
+# Check 10: At least one file was actually created
+FILE_COUNT=$(ls -1 *.txt 2>/dev/null | wc -l)
+if [ "$FILE_COUNT" -eq 0 ]; then
+    echo "❌ Error: No .txt files created"
+    echo "💡 Hint: Your local_file resources should create .txt files"
+    echo "📚 Review: Part 5 - Step 6 (Verify Resources Created)"
+    exit 1
+fi
+echo "✓ Files created (count: $FILE_COUNT)"
+
+# Success message
+cat << 'EOF'
+
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║   ✅ Challenge 1 Complete!                                   ║
+║                                                              ║
+║   Congratulations! You've successfully:                     ║
+║   • Created your first Terraform configuration              ║
+║   • Initialized Terraform                                   ║
+║   • Applied your configuration                              ║
+║   • Created infrastructure resources                        ║
+║                                                              ║
+║   🎓 Key Skills Learned:                                     ║
+║   • Infrastructure as Code fundamentals                     ║
+║   • Terraform workflow (init, plan, apply)                  ║
+║   • Resource creation with providers                        ║
+║   • State management basics                                 ║
+║                                                              ║
+║   🚀 Ready for Challenge 2?                                  ║
+║   Next up: Variables, Loops & Functions                     ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+EOF
+
+echo "✓ All checks passed!"
+exit 0
+
+# Made with Bob
