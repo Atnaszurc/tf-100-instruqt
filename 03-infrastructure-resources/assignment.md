@@ -10,7 +10,8 @@ notes:
     build a complete infrastructure stack including:\n\n- **Networks**: Virtual networks
     with proper addressing\n- **Storage**: Volumes and storage pools\n- **Virtual
     Machines**: Complete VMs with networking and storage\n- **Cloud-Init**: Automated
-    VM configuration\n- **Dependencies**: Managing resource relationships\n\nLet's build real infrastructure! \U0001F3D7️\n"
+    VM configuration\n- **Dependencies**: Managing resource relationships\n\nLet's
+    build real infrastructure! \U0001F3D7️\n"
 tabs:
 - id: tbjuwaryuc7y
   title: Terminal

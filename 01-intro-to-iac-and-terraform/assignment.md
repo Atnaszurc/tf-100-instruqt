@@ -9,8 +9,7 @@ notes:
   contents: "# Welcome to TF-100: Terraform Fundamentals! \U0001F680\n\nIn this first
     challenge, you'll learn:\n- What Infrastructure as Code (IaC) is and why it matters\n-
     How Terraform works and its core concepts\n- How to write and execute your first
-    Terraform configuration\n\nLet's begin your Terraform
-    journey!\n"
+    Terraform configuration\n\nLet's begin your Terraform journey!\n"
 tabs:
 - id: 9xjicnddy6d4
   title: Terminal

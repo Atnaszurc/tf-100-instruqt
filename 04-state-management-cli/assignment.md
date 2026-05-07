@@ -10,7 +10,8 @@ notes:
     Terraform's state system and CLI:\n\n- **State Management**: Understanding and
     manipulating state\n- **State Commands**: Inspecting and modifying state safely\n-
     **Workspaces**: Managing multiple environments\n- **CLI Features**: Advanced commands
-    and debugging\n- **State Locking**: Preventing concurrent modifications\n\nLet's master Terraform's state system! \U0001F527\n"
+    and debugging\n- **State Locking**: Preventing concurrent modifications\n\nLet's
+    master Terraform's state system! \U0001F527\n"
 tabs:
 - id: qxsfomqd7tiv
   title: Terminal

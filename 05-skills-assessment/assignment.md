@@ -11,8 +11,7 @@ notes:
     Multi-tier application infrastructure\n- Multiple environments using workspaces\n-
     Automated configuration with cloud-init\n- Proper variable management\n- Complete
     outputs and documentation\n\n**No Step-by-Step Instructions!**\nYou'll receive
-    requirements and must implement them yourself.\n\nShow
-    what you've learned! \U0001F680\n"
+    requirements and must implement them yourself.\n\nShow what you've learned! \U0001F680\n"
 tabs:
 - id: ikynvrcwrkw8
   title: Terminal

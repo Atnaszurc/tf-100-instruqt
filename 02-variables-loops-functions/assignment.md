@@ -11,8 +11,8 @@ notes:
     **Input Variables**: Accept configuration values from users\n- **Output Values**:
     Export information for other configurations\n- **Local Values**: Compute and reuse
     expressions\n- **Loops**: Create multiple similar resources efficiently\n- **Functions**:
-    Transform and manipulate data\n\nLet's make your
-    infrastructure code flexible and powerful! \U0001F680\n"
+    Transform and manipulate data\n\nLet's make your infrastructure code flexible
+    and powerful! \U0001F680\n"
 tabs:
 - id: vtfidvhcwo52
   title: Terminal
