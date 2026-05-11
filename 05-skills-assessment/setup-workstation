@@ -41,12 +41,12 @@ This is your final challenge - a comprehensive assessment!
 Build a complete multi-tier infrastructure for dev and prod environments.
 
 📋 REQUIREMENTS:
-  • Custom network (10.20.0.0/24)
-  • 3 VMs per environment (web, app, db)
+  • Custom network
+  • 3 VMs (web, app, db)
   • Variables with validation
-  • Workspaces for dev and prod
   • Comprehensive outputs
   • Production-ready code
+  • Organized file structure
 
 ⚠️  NO STEP-BY-STEP INSTRUCTIONS!
 You must design and implement the solution yourself using what you've learned.
@@ -57,12 +57,12 @@ You must design and implement the solution yourself using what you've learned.
   • Your knowledge from Challenges 1-4
 
 💡 HINTS:
-  1. Start with main.tf and variables.tf
-  2. Create network and storage resources
-  3. Create VM resources
-  4. Define outputs
-  5. Test in dev workspace first
-  6. Deploy to prod workspace
+  1. Organize code into separate files (main.tf, variables.tf, locals.tf, network.tf, storage.tf, vms.tf, outputs.tf)
+  2. Start with provider configuration
+  3. Create network and storage resources
+  4. Create VM resources
+  5. Define comprehensive outputs
+  6. Test with dev environment first
 
 ⏱️  TIME LIMIT: 2 hours
 
