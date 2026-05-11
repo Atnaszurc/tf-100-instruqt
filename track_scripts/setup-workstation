@@ -98,6 +98,18 @@ apt-get install -y \
     tree \
     git
 
+# Clone the lab assets repository
+echo "Cloning lab assets from GitHub..."
+REPO_URL="https://github.com/Atnaszurc/tf-100-instruqt.git"
+ASSETS_DIR="/root/lab-assets"
+
+if [ ! -d "$ASSETS_DIR" ]; then
+    git clone "$REPO_URL" "$ASSETS_DIR"
+    echo "✓ Lab assets cloned successfully"
+else
+    echo "✓ Lab assets already present"
+fi
+
 # Set bash as default shell for root user
 echo "Setting bash as default shell..."
 chsh -s /bin/bash root

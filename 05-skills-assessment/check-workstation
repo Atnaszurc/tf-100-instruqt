@@ -20,12 +20,8 @@ required_files=(
     "locals.tf"
     "network.tf"
     "storage.tf"
-    "cloud-init.tf"
     "vms.tf"
     "outputs.tf"
-    "cloud-init-web.yaml"
-    "cloud-init-app.yaml"
-    "cloud-init-db.yaml"
 )
 
 files_exist=true
@@ -149,27 +145,29 @@ else
     echo "  ⚠️  Prod infrastructure incomplete (0 pts)"
 fi
 
-# Check 11: VMs running in dev (10 points)
+# Check 11: VMs created in dev (10 points)
 echo "✓ Checking dev VMs (10 pts)..."
 terraform workspace select dev > /dev/null 2>&1
 dev_vms=$(virsh list --all | grep -c "dev-" || echo "0")
 if [ "$dev_vms" -ge 3 ]; then
     SCORE=$((SCORE + 10))
-    echo "  ✅ All 3 dev VMs running (+10 pts)"
+    echo "  ✅ All 3 dev VMs created (+10 pts)"
 else
     echo "  ⚠️  Expected 3 dev VMs, found $dev_vms (0 pts)"
 fi
 
-# Check 12: VMs running in prod (10 points)
+# Check 12: VMs created in prod (10 points)
 echo "✓ Checking prod VMs (10 pts)..."
 terraform workspace select prod > /dev/null 2>&1
 prod_vms=$(virsh list --all | grep -c "prod-" || echo "0")
 if [ "$prod_vms" -ge 3 ]; then
     SCORE=$((SCORE + 10))
-    echo "  ✅ All 3 prod VMs running (+10 pts)"
+    echo "  ✅ All 3 prod VMs created (+10 pts)"
 else
     echo "  ⚠️  Expected 3 prod VMs, found $prod_vms (0 pts)"
 fi
+
+echo "  Note: VMs may not auto-start without cloud-init configuration"
 
 # Check 13: Network configuration (5 points)
 echo "✓ Checking network configuration (5 pts)..."
@@ -191,40 +189,17 @@ else
     echo "  ⚠️  Base volume pattern not used (0 pts)"
 fi
 
-# Check 15: Cloud-init integration (10 points)
-echo "✓ Checking cloud-init integration (10 pts)..."
-cloudinit_score=0
-
-if grep -q "resource \"libvirt_cloudinit_disk\"" cloud-init.tf; then
-    cloudinit_score=$((cloudinit_score + 3))
-fi
-
-if grep -q "cloudinit" vms.tf; then
-    cloudinit_score=$((cloudinit_score + 3))
-fi
-
-if [ -f "cloud-init-web.yaml" ] && grep -q "nginx" cloud-init-web.yaml; then
-    cloudinit_score=$((cloudinit_score + 2))
-fi
-
-if [ -f "cloud-init-app.yaml" ] && grep -q "python" cloud-init-app.yaml; then
-    cloudinit_score=$((cloudinit_score + 2))
-fi
-
-SCORE=$((SCORE + cloudinit_score))
-echo "  ✅ Cloud-init integration (+${cloudinit_score} pts)"
-
-# Check 16: Workspace-aware naming (5 points)
-echo "✓ Checking workspace-aware naming (5 pts)..."
+# Check 15: Workspace-aware naming (10 points)
+echo "✓ Checking workspace-aware naming (10 pts)..."
 if grep -q "terraform.workspace" vms.tf && \
    grep -q "terraform.workspace" network.tf; then
-    SCORE=$((SCORE + 5))
-    echo "  ✅ Resources use workspace in names (+5 pts)"
+    SCORE=$((SCORE + 10))
+    echo "  ✅ Resources use workspace in names (+10 pts)"
 else
     echo "  ⚠️  Workspace-aware naming incomplete (0 pts)"
 fi
 
-# Check 17: Outputs working (5 points)
+# Check 16: Outputs working (5 points)
 echo "✓ Checking output functionality (5 pts)..."
 terraform workspace select prod > /dev/null 2>&1
 if terraform output > /dev/null 2>&1 && \
@@ -235,7 +210,7 @@ else
     echo "  ⚠️  Outputs not working (0 pts)"
 fi
 
-# Check 18: Variable descriptions (5 points)
+# Check 17: Variable descriptions (5 points)
 echo "✓ Checking documentation (5 pts)..."
 desc_count=$(grep -c "description" variables.tf || echo "0")
 if [ "$desc_count" -ge 5 ]; then
@@ -269,7 +244,6 @@ if [ "$SCORE" -ge 70 ]; then
     echo "    ✅ Terraform configuration and best practices"
     echo "    ✅ Variable management and validation"
     echo "    ✅ Workspace usage for environments"
-    echo "    ✅ Cloud-init automation"
     echo "    ✅ Resource organization and naming"
     echo "    ✅ State management"
     echo ""
@@ -297,10 +271,10 @@ else
         echo "    • Deploy complete prod infrastructure"
     fi
     if [ "$dev_vms" -lt 3 ]; then
-        echo "    • Ensure all dev VMs are running"
+        echo "    • Ensure all dev VMs are created"
     fi
     if [ "$prod_vms" -lt 3 ]; then
-        echo "    • Ensure all prod VMs are running"
+        echo "    • Ensure all prod VMs are created"
     fi
     echo ""
     echo "  💡 Review previous challenges and try again!"

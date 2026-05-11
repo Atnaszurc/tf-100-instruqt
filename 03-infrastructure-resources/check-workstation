@@ -9,21 +9,10 @@ cd /root/terraform-lab
 # Check 1: Required files exist
 echo "✓ Checking for required files..."
 
-required_files=("main.tf" "network.tf" "storage.tf" "vms.tf" "outputs.tf" "cloud-init.tf")
+required_files=("main.tf" "network.tf" "storage.tf" "vms.tf" "outputs.tf")
 for file in "${required_files[@]}"; do
     if [ ! -f "$file" ]; then
         fail-message "$file not found. Create all required infrastructure files."
-        exit 1
-    fi
-done
-
-# Check 2: Cloud-init YAML files exist
-echo "✓ Checking cloud-init configuration files..."
-
-cloud_init_files=("cloud-init-web.yaml" "cloud-init-app.yaml" "cloud-init-db.yaml")
-for file in "${cloud_init_files[@]}"; do
-    if [ ! -f "$file" ]; then
-        fail-message "$file not found. Create cloud-init configurations for all VMs."
         exit 1
     fi
 done
@@ -68,15 +57,7 @@ if ! grep -q "base_volume" storage.tf && ! grep -q "backing_store" storage.tf; t
     exit 1
 fi
 
-# Check 8: Cloud-init disks defined
-echo "✓ Checking cloud-init disk resources..."
-
-if ! grep -q "resource \"libvirt_cloudinit_disk\"" cloud-init.tf; then
-    fail-message "No libvirt_cloudinit_disk resources found. Define cloud-init disks for VM configuration."
-    exit 1
-fi
-
-# Check 9: VMs defined
+# Check 8: VMs defined
 echo "✓ Checking VM definitions..."
 
 vm_count=$(grep -c "resource \"libvirt_domain\"" vms.tf || echo "0")
@@ -85,15 +66,7 @@ if [ "$vm_count" -lt 3 ]; then
     exit 1
 fi
 
-# Check 10: VMs use cloud-init
-echo "✓ Checking cloud-init integration..."
-
-if ! grep -q "cloudinit" vms.tf; then
-    fail-message "VMs don't use cloud-init. Add cloudinit attribute to VM definitions."
-    exit 1
-fi
-
-# Check 11: VMs use custom network
+# Check 9: VMs use custom network
 echo "✓ Checking network integration..."
 
 if ! grep -q "network" vms.tf; then
@@ -101,7 +74,7 @@ if ! grep -q "network" vms.tf; then
     exit 1
 fi
 
-# Check 12: Outputs defined
+# Check 10: Outputs defined
 echo "✓ Checking output definitions..."
 
 if ! grep -q "output" outputs.tf; then
@@ -109,7 +82,7 @@ if ! grep -q "output" outputs.tf; then
     exit 1
 fi
 
-# Check 13: Plan succeeds
+# Check 11: Plan succeeds
 echo "✓ Checking Terraform plan..."
 
 terraform plan -out=tfplan > /tmp/plan_output.txt 2>&1 || plan_exit_code=$?
@@ -118,7 +91,7 @@ if [ "${plan_exit_code:-0}" -ne 0 ]; then
     exit 1
 fi
 
-# Check 14: Apply succeeds
+# Check 12: Apply succeeds
 echo "✓ Applying Terraform configuration (this may take 5-10 minutes)..."
 
 terraform apply -auto-approve > apply.log 2>&1 || apply_exit_code=$?
@@ -127,7 +100,7 @@ if [ "${apply_exit_code:-0}" -ne 0 ]; then
     exit 1
 fi
 
-# Check 15: Network was created
+# Check 13: Network was created
 echo "✓ Checking network creation..."
 
 if ! virsh net-list --all | grep -q "app-network"; then
@@ -135,7 +108,7 @@ if ! virsh net-list --all | grep -q "app-network"; then
     exit 1
 fi
 
-# Check 16: Network is active
+# Check 14: Network is active
 echo "✓ Checking network status..."
 
 if ! virsh net-list | grep -q "app-network.*active"; then
@@ -143,7 +116,7 @@ if ! virsh net-list | grep -q "app-network.*active"; then
     exit 1
 fi
 
-# Check 17: VMs were created
+# Check 15: VMs were created
 echo "✓ Checking VM creation..."
 
 expected_vms=("web-server" "app-server" "db-server")
@@ -154,9 +127,9 @@ for vm in "${expected_vms[@]}"; do
     fi
 done
 
-# Check 18: VMs are running
+# Check 16: VMs are running
 echo "✓ Checking VM status..."
-
+echo "$(virsh list --all)"
 for vm in "${expected_vms[@]}"; do
     if ! virsh list | grep -q "$vm.*running"; then
         fail-message "VM '$vm' is not running. Check VM configuration and logs."
@@ -164,19 +137,7 @@ for vm in "${expected_vms[@]}"; do
     fi
 done
 
-# Check 19: VMs have IP addresses
-echo "✓ Checking VM IP assignment..."
-
-sleep 30  # Give VMs time to get DHCP leases
-
-for vm in "${expected_vms[@]}"; do
-    if ! virsh net-dhcp-leases app-network | grep -q "$vm"; then
-        fail-message "VM '$vm' doesn't have an IP address. Check network configuration and wait_for_lease setting."
-        exit 1
-    fi
-done
-
-# Check 20: Outputs are available
+# Check 16: Outputs are available
 echo "✓ Checking outputs..."
 
 terraform output > /dev/null 2>&1 || output_exit_code=$?
@@ -185,16 +146,7 @@ if [ "${output_exit_code:-0}" -ne 0 ]; then
     exit 1
 fi
 
-# Check 21: VM IPs output exists
-echo "✓ Validating VM IP outputs..."
-
-terraform output vm_ips > /dev/null 2>&1 || vm_ips_exit_code=$?
-if [ "${vm_ips_exit_code:-0}" -ne 0 ]; then
-    fail-message "Output 'vm_ips' not available. Define this output in outputs.tf."
-    exit 1
-fi
-
-# Check 22: Infrastructure summary output exists
+# Check 17: Infrastructure summary output exists
 echo "✓ Validating infrastructure summary..."
 
 terraform output infrastructure_summary > /dev/null 2>&1 || infra_summary_exit_code=$?
@@ -203,21 +155,12 @@ if [ "${infra_summary_exit_code:-0}" -ne 0 ]; then
     exit 1
 fi
 
-# Check 23: Volumes were created
+# Check 18: Volumes were created
 echo "✓ Checking storage volumes..."
 
 volume_count=$(virsh vol-list default | grep -c "qcow2" || echo "0")
 if [ "$volume_count" -lt 4 ]; then
     fail-message "Expected at least 4 volumes (1 base + 3 derived), found $volume_count."
-    exit 1
-fi
-
-# Check 24: Cloud-init ISOs were created
-echo "✓ Checking cloud-init ISOs..."
-
-iso_count=$(virsh vol-list default | grep -c "\.iso" || echo "0")
-if [ "$iso_count" -lt 3 ]; then
-    fail-message "Expected 3 cloud-init ISO files, found $iso_count. Check cloud-init disk creation."
     exit 1
 fi
 
@@ -234,29 +177,21 @@ echo ""
 echo "  ✓ Created custom virtual network with NAT and DHCP"
 echo "  ✓ Configured storage with base and derived volumes"
 echo "  ✓ Deployed 3-tier application infrastructure"
-echo "  ✓ Automated VM configuration with cloud-init"
 echo "  ✓ Managed resource dependencies correctly"
 echo "  ✓ Exposed infrastructure information via outputs"
 echo ""
 echo "Infrastructure Summary:"
 terraform output infrastructure_summary | head -20
 echo ""
-echo "VM IP Addresses:"
-terraform output vm_ips
-echo ""
 echo "Key Skills Mastered:"
 echo "  • Virtual network creation and configuration"
 echo "  • Storage pool and volume management"
 echo "  • Base volume + derived volume pattern"
-echo "  • Cloud-init for automated VM setup"
 echo "  • Resource dependency management"
 echo "  • Complete infrastructure deployment"
 echo ""
-echo "💡 Tip: Your VMs are now running! Cloud-init is configuring them."
-echo "   Wait 2-3 minutes for services to start, then test:"
-echo ""
-echo "   WEB_IP=\$(terraform output -json vm_ips | jq -r '.web_server')"
-echo "   curl http://\$WEB_IP"
+echo "💡 Tip: Your VMs are now running!"
+echo "   You can connect to them using virsh console <vm-name>"
 echo ""
 echo "Next: Challenge 4 - State Management & CLI"
 echo "Master Terraform's state system and advanced CLI features!"
