@@ -21,7 +21,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
@@ -35,28 +35,21 @@ EOF
 cat > network.tf << 'EOF'
 resource "libvirt_network" "app_network" {
   name      = "app-network"
-  mode      = "nat"
-  domain    = "app.local"
-  addresses = ["10.17.3.0/24"]
-  
-  dhcp {
-    enabled = true
-  }
-  
-  dns {
-    enabled    = true
-    local_only = false
-  }
-  
   autostart = true
+  
+  domain = {
+    name = "app.local"
+  }
+  
+  # Note: In libvirt provider 0.9.3, mode and addresses are not supported
+  # Networks are automatically NAT-enabled with DHCP
 }
 
 output "network_info" {
   description = "Network configuration details"
   value = {
-    name      = libvirt_network.app_network.name
-    addresses = libvirt_network.app_network.addresses
-    bridge    = libvirt_network.app_network.bridge
+    name   = libvirt_network.app_network.name
+    bridge = libvirt_network.app_network.bridge
   }
 }
 EOF
@@ -64,34 +57,69 @@ EOF
 # Create storage.tf
 cat > storage.tf << 'EOF'
 resource "libvirt_volume" "ubuntu_base" {
-  name   = "ubuntu-22.04-base.qcow2"
-  pool   = "default"
-  source = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
-  format = "qcow2"
+  name = "ubuntu-22.04-base.qcow2"
+  pool = "default"
+  create = {
+    content = {
+      url = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    }
+  }
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 resource "libvirt_volume" "web_disk" {
-  name           = "web-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 21474836480
-  format         = "qcow2"
+  name     = "web-server-disk.qcow2"
+  pool     = "default"
+  capacity = 21474836480
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 resource "libvirt_volume" "app_disk" {
-  name           = "app-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 21474836480
-  format         = "qcow2"
+  name     = "app-server-disk.qcow2"
+  pool     = "default"
+  capacity = 21474836480
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 resource "libvirt_volume" "db_disk" {
-  name           = "db-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 32212254720
-  format         = "qcow2"
+  name     = "db-server-disk.qcow2"
+  pool     = "default"
+  capacity = 32212254720
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 output "storage_info" {
@@ -107,176 +135,52 @@ output "storage_info" {
 }
 EOF
 
-# Create cloud-init-web.yaml
-cat > cloud-init-web.yaml << 'EOF'
-#cloud-config
-hostname: web-server
-fqdn: web-server.app.local
-manage_etc_hosts: true
-
-users:
-  - name: ubuntu
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    lock_passwd: false
-
-packages:
-  - nginx
-  - curl
-  - htop
-
-write_files:
-  - path: /var/www/html/index.html
-    content: |
-      <!DOCTYPE html>
-      <html>
-      <head><title>Web Server</title></head>
-      <body>
-        <h1>Web Server - Terraform Lab</h1>
-        <p>Hostname: web-server.app.local</p>
-        <p>Role: Frontend Web Server</p>
-        <p>Status: Online</p>
-      </body>
-      </html>
-    permissions: '0644'
-
-runcmd:
-  - systemctl enable nginx
-  - systemctl start nginx
-  - echo "Web server setup complete" > /var/log/terraform-setup.log
-EOF
-
-# Create cloud-init-app.yaml
-cat > cloud-init-app.yaml << 'EOF'
-#cloud-config
-hostname: app-server
-fqdn: app-server.app.local
-manage_etc_hosts: true
-
-users:
-  - name: ubuntu
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    lock_passwd: false
-
-packages:
-  - python3
-  - curl
-  - htop
-
-write_files:
-  - path: /opt/app/server.py
-    content: |
-      #!/usr/bin/env python3
-      from http.server import HTTPServer, BaseHTTPRequestHandler
-      import json
-      
-      class AppHandler(BaseHTTPRequestHandler):
-          def do_GET(self):
-              self.send_response(200)
-              self.send_header('Content-type', 'application/json')
-              self.end_headers()
-              response = {"service": "app-server", "status": "healthy"}
-              self.wfile.write(json.dumps(response).encode())
-      
-      if __name__ == '__main__':
-          server = HTTPServer(('0.0.0.0', 8080), AppHandler)
-          server.serve_forever()
-    permissions: '0755'
-
-runcmd:
-  - mkdir -p /opt/app
-  - nohup python3 /opt/app/server.py > /var/log/app-server.log 2>&1 &
-  - echo "App server setup complete" > /var/log/terraform-setup.log
-EOF
-
-# Create cloud-init-db.yaml
-cat > cloud-init-db.yaml << 'EOF'
-#cloud-config
-hostname: db-server
-fqdn: db-server.app.local
-manage_etc_hosts: true
-
-users:
-  - name: ubuntu
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    lock_passwd: false
-
-packages:
-  - sqlite3
-  - curl
-  - htop
-
-write_files:
-  - path: /opt/database/init.sql
-    content: |
-      CREATE TABLE users (
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL,
-          email TEXT UNIQUE NOT NULL
-      );
-      INSERT INTO users (name, email) VALUES 
-          ('Alice', 'alice@example.com'),
-          ('Bob', 'bob@example.com');
-    permissions: '0644'
-
-runcmd:
-  - mkdir -p /opt/database
-  - sqlite3 /opt/database/app.db < /opt/database/init.sql
-  - echo "Database server setup complete" > /var/log/terraform-setup.log
-EOF
-
-# Create cloud-init.tf
-cat > cloud-init.tf << 'EOF'
-resource "libvirt_cloudinit_disk" "web_init" {
-  name      = "web-init.iso"
-  pool      = "default"
-  user_data = file("${path.module}/cloud-init-web.yaml")
-}
-
-resource "libvirt_cloudinit_disk" "app_init" {
-  name      = "app-init.iso"
-  pool      = "default"
-  user_data = file("${path.module}/cloud-init-app.yaml")
-}
-
-resource "libvirt_cloudinit_disk" "db_init" {
-  name      = "db-init.iso"
-  pool      = "default"
-  user_data = file("${path.module}/cloud-init-db.yaml")
-}
-EOF
-
 # Create vms.tf
 cat > vms.tf << 'EOF'
 resource "libvirt_domain" "web_server" {
   name   = "web-server"
   memory = 1024
   vcpu   = 1
+  type   = "kvm"
   
-  cloudinit = libvirt_cloudinit_disk.web_init.id
-  
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "web-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
   
-  disk {
-    volume_id = libvirt_volume.web_disk.id
-  }
-  
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-  
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        volume = {
+          volume = libvirt_volume.web_disk.id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 
@@ -284,29 +188,46 @@ resource "libvirt_domain" "app_server" {
   name   = "app-server"
   memory = 1024
   vcpu   = 1
+  type   = "kvm"
   
-  cloudinit = libvirt_cloudinit_disk.app_init.id
-  
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "app-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
   
-  disk {
-    volume_id = libvirt_volume.app_disk.id
-  }
-  
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-  
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        volume = {
+          volume = libvirt_volume.app_disk.id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 
@@ -314,41 +235,58 @@ resource "libvirt_domain" "db_server" {
   name   = "db-server"
   memory = 2048
   vcpu   = 2
+  type   = "kvm"
   
-  cloudinit = libvirt_cloudinit_disk.db_init.id
-  
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "db-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
   
-  disk {
-    volume_id = libvirt_volume.db_disk.id
-  }
-  
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-  
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        volume = {
+          volume = libvirt_volume.db_disk.id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 EOF
 
 # Create outputs.tf
 cat > outputs.tf << 'EOF'
-output "vm_ips" {
-  description = "IP addresses of all VMs"
+output "vm_names" {
+  description = "Names of all VMs"
   value = {
-    web_server = libvirt_domain.web_server.network_interface[0].addresses[0]
-    app_server = libvirt_domain.app_server.network_interface[0].addresses[0]
-    db_server  = libvirt_domain.db_server.network_interface[0].addresses[0]
+    web_server = libvirt_domain.web_server.name
+    app_server = libvirt_domain.app_server.name
+    db_server  = libvirt_domain.db_server.name
   }
 }
 
@@ -357,36 +295,33 @@ output "infrastructure_summary" {
   value = {
     network = {
       name = libvirt_network.app_network.name
-      cidr = libvirt_network.app_network.addresses[0]
     }
     vms = {
       web = {
         name   = libvirt_domain.web_server.name
         memory = libvirt_domain.web_server.memory
         vcpu   = libvirt_domain.web_server.vcpu
-        ip     = libvirt_domain.web_server.network_interface[0].addresses[0]
       }
       app = {
         name   = libvirt_domain.app_server.name
         memory = libvirt_domain.app_server.memory
         vcpu   = libvirt_domain.app_server.vcpu
-        ip     = libvirt_domain.app_server.network_interface[0].addresses[0]
       }
       db = {
         name   = libvirt_domain.db_server.name
         memory = libvirt_domain.db_server.memory
         vcpu   = libvirt_domain.db_server.vcpu
-        ip     = libvirt_domain.db_server.network_interface[0].addresses[0]
       }
     }
   }
 }
 
-output "service_urls" {
-  description = "URLs to access services"
+output "vm_info" {
+  description = "VM resource information"
   value = {
-    web_server = "http://${libvirt_domain.web_server.network_interface[0].addresses[0]}"
-    app_server = "http://${libvirt_domain.app_server.network_interface[0].addresses[0]}:8080"
+    web_server = "VM: ${libvirt_domain.web_server.name} (${libvirt_domain.web_server.memory}MB, ${libvirt_domain.web_server.vcpu} vCPU)"
+    app_server = "VM: ${libvirt_domain.app_server.name} (${libvirt_domain.app_server.memory}MB, ${libvirt_domain.app_server.vcpu} vCPU)"
+    db_server  = "VM: ${libvirt_domain.db_server.name} (${libvirt_domain.db_server.memory}MB, ${libvirt_domain.db_server.vcpu} vCPU)"
   }
 }
 EOF

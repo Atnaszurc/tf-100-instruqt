@@ -4,10 +4,10 @@ set -e
 # Solve script for Challenge 1: Introduction to IaC & Terraform Basics
 # This script automatically completes the challenge requirements
 
-cd /root/terraform-lab
+cd /root/terraform-workspace
 
 # Copy the complete solution from the examples
-cp -r /root/terraform-lab-solutions/challenge-01/* .
+cp /root/terraform-workspace/examples/challenge-01/main.tf .
 
 # Initialize Terraform
 terraform init

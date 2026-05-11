@@ -3,14 +3,14 @@ set -e
 
 # Solve script for Challenge 5: Skills Assessment
 
-cd /root/terraform-project
+cd /root/terraform-lab
 
 # Copy the complete solution
 cp -r /root/terraform-lab-solutions/challenge-05/* .
 
-# Initialize and apply
+# Initialize and apply (using dev environment by default)
 terraform init
-terraform apply -auto-approve
+terraform apply -auto-approve -var="environment=dev"
 
 # Wait for VMs to boot and services to start
 sleep 180

@@ -116,7 +116,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
@@ -129,10 +129,14 @@ provider "libvirt" {
 resource "libvirt_volume" "vm_disk" {
   for_each = local.vm_configs
   
-  name   = "${each.value.name}-disk.qcow2"
-  pool   = "default"
-  size   = each.value.disk_size
-  format = "qcow2"
+  name     = "${each.value.name}-disk.qcow2"
+  pool     = "default"
+  capacity = each.value.disk_size
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # Create VMs using for_each
@@ -142,26 +146,46 @@ resource "libvirt_domain" "vm" {
   name   = each.value.name
   memory = each.value.memory
   vcpu   = each.value.vcpu
+  type   = "kvm"
   
-  disk {
-    volume_id = libvirt_volume.vm_disk[each.key].id
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
   
-  network_interface {
-    network_name   = "default"
-    wait_for_lease = true
-  }
-  
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
-  }
-  
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disk = [
+      {
+        volume = {
+          volume = libvirt_volume.vm_disk[each.key].id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interface = [
+      {
+        network = {
+          network = "default"
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 

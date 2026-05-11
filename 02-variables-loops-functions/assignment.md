@@ -186,11 +186,15 @@ locals {
 
 ```hcl
 resource "libvirt_volume" "disk" {
-  count  = var.instance_count
-  name   = "disk-${count.index}.qcow2"
-  pool   = "default"
-  size   = 10737418240  # 10GB
-  format = "qcow2"
+  count    = var.instance_count
+  name     = "disk-${count.index}.qcow2"
+  pool     = "default"
+  capacity = 10737418240  # 10GB
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 resource "libvirt_domain" "vm" {
@@ -198,9 +202,20 @@ resource "libvirt_domain" "vm" {
   name   = "vm-${count.index}"
   memory = 2048
   vcpu   = 2
+  type   = "kvm"
 
-  disk {
-    volume_id = libvirt_volume.disk[count.index].id
+  devices = {
+    disk = [
+      {
+        volume = {
+          volume = libvirt_volume.disk[count.index].id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
   }
 }
 ```
@@ -231,6 +246,21 @@ resource "libvirt_domain" "vm" {
   name   = each.key
   memory = each.value.memory
   vcpu   = each.value.vcpu
+  type   = "kvm"
+
+  devices = {
+    disk = [
+      {
+        volume = {
+          volume = libvirt_volume.disk[each.key].id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+  }
 }
 ```
 
@@ -526,7 +556,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
@@ -539,10 +569,14 @@ provider "libvirt" {
 resource "libvirt_volume" "vm_disk" {
   for_each = local.vm_configs
 
-  name   = "${each.value.name}-disk.qcow2"
-  pool   = "default"
-  size   = each.value.disk_size
-  format = "qcow2"
+  name     = "${each.value.name}-disk.qcow2"
+  pool     = "default"
+  capacity = each.value.disk_size
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # Create VMs using for_each
@@ -552,26 +586,49 @@ resource "libvirt_domain" "vm" {
   name   = each.value.name
   memory = each.value.memory
   vcpu   = each.value.vcpu
+  type   = "kvm"
 
-  disk {
-    volume_id = libvirt_volume.vm_disk[each.key].id
-  }
-
-  network_interface {
-    network_name   = "default"
-    wait_for_lease = true
-  }
-
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
-  }
-
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disk = [
+      {
+        volume = {
+          volume = libvirt_volume.vm_disk[each.key].id
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interface = [
+      {
+        network = {
+          network = "default"
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
+    graphics = [
+      {
+        type = "spice"
+        listen = {
+          type = "address"
+        }
+        autoport = true
+      }
+    ]
   }
 }
 

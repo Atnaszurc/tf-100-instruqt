@@ -8,13 +8,15 @@ cd /root/terraform-lab
 # Copy the complete solution
 cp -r /root/terraform-lab-solutions/challenge-04/* .
 
+# Initialize first (before creating workspaces)
+terraform init
+
 # Create workspaces
 terraform workspace new dev 2>/dev/null || terraform workspace select dev
 terraform workspace new prod 2>/dev/null || terraform workspace select prod
 
 # Apply in dev workspace
 terraform workspace select dev
-terraform init
 terraform apply -auto-approve
 
 # Apply in prod workspace

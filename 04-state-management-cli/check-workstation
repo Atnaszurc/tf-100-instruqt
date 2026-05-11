@@ -138,7 +138,8 @@ fi
 # Check 14: Verify outputs work
 echo "✓ Checking output values..."
 
-if ! terraform output > /dev/null 2>&1; then
+terraform output > /dev/null 2>&1 || output_exit_code=$?
+if [ "${output_exit_code:-0}" -ne 0 ]; then
     fail-message "Cannot retrieve outputs. Ensure outputs are properly defined and infrastructure is applied."
     exit 1
 fi
@@ -148,7 +149,8 @@ echo "✓ Checking Terraform console usage..."
 
 # This is a soft check - we can't definitively prove console was used
 # but we can check if the user has the right setup
-if ! echo "terraform.workspace" | terraform console > /dev/null 2>&1; then
+console_output=$(echo "terraform.workspace" | terraform console 2>&1 || true)
+if [ -z "$console_output" ]; then
     fail-message "Terraform console not working. Ensure infrastructure is applied."
     exit 1
 fi

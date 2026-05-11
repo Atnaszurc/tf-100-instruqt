@@ -27,6 +27,8 @@ timelimit: 3600
 enhanced_loading: null
 ---
 
+> **📝 Note on Code Examples**: This assignment contains simplified code examples for teaching purposes. The working solution in `/root/terraform-lab-solutions/challenge-04` uses libvirt provider 0.9+ syntax. When copying code, refer to the solution directory for production-ready examples.
+
 # Challenge 4: State Management & CLI
 
 ## 🎯 Learning Objectives

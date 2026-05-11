@@ -63,8 +63,8 @@ fi
 # Check 7: Base volume and derived volumes
 echo "✓ Checking base and derived volumes..."
 
-if ! grep -q "base_volume_id" storage.tf; then
-    fail-message "No base_volume_id references found. Use base volumes with derived volumes for efficiency."
+if ! grep -q "base_volume" storage.tf && ! grep -q "backing_store" storage.tf; then
+    fail-message "No base_volume or backing_store references found. Use base volumes with derived volumes for efficiency."
     exit 1
 fi
 
@@ -96,8 +96,8 @@ fi
 # Check 11: VMs use custom network
 echo "✓ Checking network integration..."
 
-if ! grep -q "network_id" vms.tf; then
-    fail-message "VMs don't reference custom network. Use network_id in network_interface blocks."
+if ! grep -q "network" vms.tf; then
+    fail-message "VMs don't reference custom network. Use network reference in interface blocks."
     exit 1
 fi
 
@@ -112,7 +112,8 @@ fi
 # Check 13: Plan succeeds
 echo "✓ Checking Terraform plan..."
 
-if ! terraform plan -out=tfplan > /dev/null 2>&1; then
+terraform plan -out=tfplan > /tmp/plan_output.txt 2>&1 || plan_exit_code=$?
+if [ "${plan_exit_code:-0}" -ne 0 ]; then
     fail-message "Terraform plan failed. Fix configuration errors. Run 'terraform plan' to see details."
     exit 1
 fi
@@ -120,7 +121,8 @@ fi
 # Check 14: Apply succeeds
 echo "✓ Applying Terraform configuration (this may take 5-10 minutes)..."
 
-if ! terraform apply -auto-approve > apply.log 2>&1; then
+terraform apply -auto-approve > apply.log 2>&1 || apply_exit_code=$?
+if [ "${apply_exit_code:-0}" -ne 0 ]; then
     fail-message "Terraform apply failed. Check apply.log for errors. Common issues: network conflicts, insufficient resources, or download failures."
     exit 1
 fi
@@ -177,7 +179,8 @@ done
 # Check 20: Outputs are available
 echo "✓ Checking outputs..."
 
-if ! terraform output > /dev/null 2>&1; then
+terraform output > /dev/null 2>&1 || output_exit_code=$?
+if [ "${output_exit_code:-0}" -ne 0 ]; then
     fail-message "No outputs available. Ensure outputs.tf is properly configured."
     exit 1
 fi
@@ -185,7 +188,8 @@ fi
 # Check 21: VM IPs output exists
 echo "✓ Validating VM IP outputs..."
 
-if ! terraform output vm_ips > /dev/null 2>&1; then
+terraform output vm_ips > /dev/null 2>&1 || vm_ips_exit_code=$?
+if [ "${vm_ips_exit_code:-0}" -ne 0 ]; then
     fail-message "Output 'vm_ips' not available. Define this output in outputs.tf."
     exit 1
 fi
@@ -193,7 +197,8 @@ fi
 # Check 22: Infrastructure summary output exists
 echo "✓ Validating infrastructure summary..."
 
-if ! terraform output infrastructure_summary > /dev/null 2>&1; then
+terraform output infrastructure_summary > /dev/null 2>&1 || infra_summary_exit_code=$?
+if [ "${infra_summary_exit_code:-0}" -ne 0 ]; then
     fail-message "Output 'infrastructure_summary' not available. Define this output in outputs.tf."
     exit 1
 fi

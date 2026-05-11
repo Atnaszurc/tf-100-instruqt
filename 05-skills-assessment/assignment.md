@@ -27,6 +27,8 @@ timelimit: 7200
 enhanced_loading: null
 ---
 
+> **📝 Note on Code Examples**: This assignment contains simplified code examples for teaching purposes. The complete working solution in `/root/terraform-lab-solutions/challenge-05` uses libvirt provider 0.9+ syntax. Refer to the solution directory for production-ready examples.
+
 # Challenge 5: Skills Assessment
 
 ## 🎯 Assessment Overview

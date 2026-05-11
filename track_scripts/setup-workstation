@@ -64,14 +64,22 @@ apt-get install -y \
     libvirt-dev \
     pkg-config
 
-# Create workspace directory
-mkdir -p /root/terraform-workspace
+# Create workspace directories for different challenges
+mkdir -p /root/terraform-workspace  # Challenge 1
+mkdir -p /root/terraform-lab        # Challenges 2-4
+mkdir -p /root/terraform-project    # Challenge 5
 cd /root/terraform-workspace
 
 # Set up default libvirt network
 virsh net-list --all | grep -q default || virsh net-define /usr/share/libvirt/networks/default.xml
 virsh net-start default 2>/dev/null || true
 virsh net-autostart default
+
+# Set up default libvirt storage pool
+mkdir -p /var/lib/libvirt/images
+virsh pool-list --all | grep -q default || virsh pool-define-as default dir --target /var/lib/libvirt/images
+virsh pool-start default 2>/dev/null || true
+virsh pool-autostart default
 
 # Install helpful tools
 echo "Installing additional tools..."

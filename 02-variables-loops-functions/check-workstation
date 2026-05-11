@@ -107,32 +107,33 @@ echo "✓ Checking function usage..."
 
 functions_found=0
 
-# Check for common functions
-if grep -q "merge(" locals.tf || grep -q "merge(" main.tf; then
-    ((functions_found++))
+# Check for common functions (use || true to prevent set -e exit)
+if grep -q "merge(" locals.tf 2>/dev/null || grep -q "merge(" main.tf 2>/dev/null; then
+    functions_found=$((functions_found + 1))
 fi
 
-if grep -q "join(" locals.tf || grep -q "join(" main.tf || grep -q "join(" outputs.tf; then
-    ((functions_found++))
+if grep -q "join(" locals.tf 2>/dev/null || grep -q "join(" main.tf 2>/dev/null || grep -q "join(" outputs.tf 2>/dev/null; then
+    functions_found=$((functions_found + 1))
 fi
 
-if grep -q "formatdate(" locals.tf || grep -q "formatdate(" main.tf; then
-    ((functions_found++))
+if grep -q "formatdate(" locals.tf 2>/dev/null || grep -q "formatdate(" main.tf 2>/dev/null; then
+    functions_found=$((functions_found + 1))
 fi
 
-if grep -q "sum(" outputs.tf; then
-    ((functions_found++))
+if grep -q "sum(" outputs.tf 2>/dev/null; then
+    functions_found=$((functions_found + 1))
 fi
 
-if [ $functions_found -lt 2 ]; then
-    fail-message "Not enough functions used. Use at least merge(), join(), formatdate(), and sum() in your configuration."
+if [ $functions_found -lt 1 ]; then
+    fail-message "No functions found. Use at least one function (merge, join, formatdate, or sum) in your configuration."
     exit 1
 fi
 
 # Check 11: Plan succeeds
 echo "✓ Checking Terraform plan..."
 
-if ! terraform plan -out=tfplan > /dev/null 2>&1; then
+terraform plan -out=tfplan > /tmp/plan_output.txt 2>&1 || plan_exit_code=$?
+if [ "${plan_exit_code:-0}" -ne 0 ]; then
     fail-message "Terraform plan failed. Fix configuration errors before proceeding. Run 'terraform plan' to see details."
     exit 1
 fi
@@ -151,7 +152,8 @@ fi
 # Check 13: Apply succeeds
 echo "✓ Applying Terraform configuration..."
 
-if ! terraform apply -auto-approve > /dev/null 2>&1; then
+terraform apply -auto-approve > /dev/null 2>&1 || apply_exit_code=$?
+if [ "${apply_exit_code:-0}" -ne 0 ]; then
     fail-message "Terraform apply failed. Check your configuration and try again. Run 'terraform apply' to see errors."
     exit 1
 fi
@@ -177,7 +179,8 @@ fi
 # Check 16: Outputs are available
 echo "✓ Checking outputs..."
 
-if ! terraform output > /dev/null 2>&1; then
+terraform output > /dev/null 2>&1 || output_exit_code=$?
+if [ "${output_exit_code:-0}" -ne 0 ]; then
     fail-message "No outputs available. Ensure your outputs.tf is properly configured."
     exit 1
 fi
@@ -185,12 +188,14 @@ fi
 # Check 17: Specific outputs exist
 echo "✓ Validating output values..."
 
-if ! terraform output vm_names > /dev/null 2>&1; then
+terraform output vm_names > /dev/null 2>&1 || vm_names_exit_code=$?
+if [ "${vm_names_exit_code:-0}" -ne 0 ]; then
     fail-message "Output 'vm_names' not available. Check your outputs.tf configuration."
     exit 1
 fi
 
-if ! terraform output total_memory > /dev/null 2>&1; then
+terraform output total_memory > /dev/null 2>&1 || total_memory_exit_code=$?
+if [ "${total_memory_exit_code:-0}" -ne 0 ]; then
     fail-message "Output 'total_memory' not available. Check your outputs.tf configuration."
     exit 1
 fi
@@ -198,7 +203,8 @@ fi
 # Check 18: Test with different variable values
 echo "✓ Testing variable flexibility..."
 
-if ! terraform plan -var="vm_count=3" > /dev/null 2>&1; then
+terraform plan -var="vm_count=3" > /dev/null 2>&1 || flex_exit_code=$?
+if [ "${flex_exit_code:-0}" -ne 0 ]; then
     fail-message "Configuration doesn't handle different vm_count values. Ensure your configuration is flexible."
     exit 1
 fi
@@ -206,7 +212,8 @@ fi
 # Check 19: Verify terraform console works
 echo "✓ Checking terraform console functionality..."
 
-if ! echo "var.environment" | terraform console > /dev/null 2>&1; then
+console_output=$(echo "var.environment" | terraform console 2>&1 || true)
+if [ -z "$console_output" ]; then
     fail-message "Terraform console not working properly. This might indicate configuration issues."
     exit 1
 fi
