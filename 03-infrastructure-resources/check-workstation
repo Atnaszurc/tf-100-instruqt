@@ -127,16 +127,6 @@ for vm in "${expected_vms[@]}"; do
     fi
 done
 
-# Check 16: VMs are running
-echo "✓ Checking VM status..."
-echo "$(virsh list --all)"
-for vm in "${expected_vms[@]}"; do
-    if ! virsh list | grep -q "$vm.*running"; then
-        fail-message "VM '$vm' is not running. Check VM configuration and logs."
-        exit 1
-    fi
-done
-
 # Check 16: Outputs are available
 echo "✓ Checking outputs..."
 

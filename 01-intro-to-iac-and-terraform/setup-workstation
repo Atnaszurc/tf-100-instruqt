@@ -13,7 +13,7 @@ rm -rf .terraform/
 
 # Pre-populate the example solution from GitHub repo
 mkdir -p /root/terraform-workspace/examples/challenge-01
-cp -r /root/lab-assets/tf-100-fundamentals-lab/assets/challenge-01/* /root/terraform-workspace/examples/challenge-01/
+cp -r /root/lab-assets/assets/challenge-01/* /root/terraform-workspace/examples/challenge-01/
 
 # Set proper permissions
 chmod 644 /root/terraform-workspace/examples/challenge-01/main.tf

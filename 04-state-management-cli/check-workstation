@@ -33,7 +33,7 @@ fi
 # Check 4: Infrastructure was applied
 echo "✓ Checking if infrastructure was applied..."
 
-if [ ! -f "terraform.tfstate" ] && [ ! -d "terraform.tfstate.d" ]; then
+if [ ! -f "terraform.tfstate" ]; then
     fail-message "No state file found. Run 'terraform apply' to create infrastructure."
     exit 1
 fi
@@ -52,74 +52,7 @@ if [ "$resource_count" -lt 1 ]; then
     exit 1
 fi
 
-# Check 6: Workspaces were created
-echo "✓ Checking for multiple workspaces..."
-
-workspace_count=$(terraform workspace list | wc -l)
-if [ "$workspace_count" -lt 2 ]; then
-    fail-message "Only default workspace found. Create additional workspaces (staging, prod) as instructed."
-    exit 1
-fi
-
-# Check 7: Check if staging workspace exists
-echo "✓ Checking for staging workspace..."
-
-if ! terraform workspace list | grep -q "staging"; then
-    fail-message "Staging workspace not found. Create it with 'terraform workspace new staging'."
-    exit 1
-fi
-
-# Check 8: Check if prod workspace exists
-echo "✓ Checking for prod workspace..."
-
-if ! terraform workspace list | grep -q "prod"; then
-    fail-message "Prod workspace not found. Create it with 'terraform workspace new prod'."
-    exit 1
-fi
-
-# Check 9: Verify workspace state files exist
-echo "✓ Checking workspace state files..."
-
-if [ ! -d "terraform.tfstate.d" ]; then
-    fail-message "Workspace state directory not found. Apply infrastructure in each workspace."
-    exit 1
-fi
-
-# Check 10: Verify resources in different workspaces
-echo "✓ Checking resources across workspaces..."
-
-current_ws=$(terraform workspace show)
-
-# Check default workspace
-terraform workspace select default > /dev/null 2>&1
-default_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
-
-# Check staging workspace
-terraform workspace select staging > /dev/null 2>&1
-staging_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
-
-# Check prod workspace
-terraform workspace select prod > /dev/null 2>&1
-prod_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
-
-# Return to original workspace
-terraform workspace select "$current_ws" > /dev/null 2>&1
-
-if [ "$default_resources" -lt 1 ] || [ "$staging_resources" -lt 1 ] || [ "$prod_resources" -lt 1 ]; then
-    fail-message "Not all workspaces have resources. Apply infrastructure in each workspace (default, staging, prod)."
-    exit 1
-fi
-
-# Check 11: Verify VMs exist in libvirt
-echo "✓ Checking created VMs..."
-
-vm_count=$(virsh list --all | grep -c "vm" || echo "0")
-if [ "$vm_count" -lt 3 ]; then
-    fail-message "Expected at least 3 VMs (one per workspace), found $vm_count. Apply in all workspaces."
-    exit 1
-fi
-
-# Check 12: Check if backup was created (state pull practice)
+# Check 6: Check if backup was created (state pull practice)
 echo "✓ Checking for state backup..."
 
 if [ ! -f "backup.tfstate" ] && [ ! -f "terraform.tfstate.backup" ]; then
@@ -127,7 +60,7 @@ if [ ! -f "backup.tfstate" ] && [ ! -f "terraform.tfstate.backup" ]; then
     exit 1
 fi
 
-# Check 13: Verify outputs are defined
+# Check 7: Verify outputs are defined
 echo "✓ Checking output definitions..."
 
 if ! grep -q "output" main.tf; then
@@ -135,7 +68,7 @@ if ! grep -q "output" main.tf; then
     exit 1
 fi
 
-# Check 14: Verify outputs work
+# Check 8: Verify outputs work
 echo "✓ Checking output values..."
 
 terraform output > /dev/null 2>&1 || output_exit_code=$?
@@ -144,33 +77,13 @@ if [ "${output_exit_code:-0}" -ne 0 ]; then
     exit 1
 fi
 
-# Check 15: Check if console was used (optional, check for history)
-echo "✓ Checking Terraform console usage..."
+# Check 9: Check if console works
+echo "✓ Checking Terraform console..."
 
-# This is a soft check - we can't definitively prove console was used
-# but we can check if the user has the right setup
-console_output=$(echo "terraform.workspace" | terraform console 2>&1 || true)
+# Verify console is functional
+console_output=$(echo "1 + 1" | terraform console 2>&1 || true)
 if [ -z "$console_output" ]; then
     fail-message "Terraform console not working. Ensure infrastructure is applied."
-    exit 1
-fi
-
-# Check 16: Verify configuration uses workspace
-echo "✓ Checking workspace usage in configuration..."
-
-if ! grep -q "terraform.workspace" main.tf; then
-    fail-message "Configuration doesn't use terraform.workspace. Update to use workspace-aware naming."
-    exit 1
-fi
-
-# Check 17: Check for proper resource naming
-echo "✓ Checking workspace-aware resource naming..."
-
-current_ws=$(terraform workspace show)
-expected_vm_name="${current_ws}-vm"
-
-if ! virsh list --all | grep -q "$expected_vm_name"; then
-    fail-message "VM not named according to workspace. Expected '${expected_vm_name}'. Use terraform.workspace in resource names."
     exit 1
 fi
 
@@ -186,34 +99,24 @@ echo "Excellent work! You've mastered Terraform state and CLI:"
 echo ""
 echo "  ✓ Created and managed infrastructure"
 echo "  ✓ Inspected state with various commands"
-echo "  ✓ Created and used multiple workspaces"
-echo "  ✓ Applied infrastructure in each workspace"
-echo "  ✓ Used workspace-aware configuration"
 echo "  ✓ Practiced state backup operations"
 echo "  ✓ Defined and used outputs"
 echo "  ✓ Used Terraform console"
 echo ""
-echo "Workspace Summary:"
-echo "  • Default: $default_resources resources"
-echo "  • Staging: $staging_resources resources"
-echo "  • Prod: $prod_resources resources"
-echo ""
-echo "Current Workspace: $(terraform workspace show)"
-echo ""
 echo "Key Skills Mastered:"
 echo "  • terraform state list/show/pull"
-echo "  • terraform workspace new/select/list"
 echo "  • terraform console for exploration"
-echo "  • Workspace-aware configurations"
 echo "  • State backup and safety practices"
 echo "  • Output management"
+echo "  • Configuration validation"
 echo ""
 echo "💡 Advanced Tips:"
 echo "   • Use 'terraform state mv' to rename resources"
 echo "   • Use 'terraform state rm' to remove from state"
 echo "   • Use 'terraform import' to add existing resources"
 echo "   • Enable TF_LOG=DEBUG for troubleshooting"
-echo "   • Use remote backends for team collaboration"
+echo "   • Use remote backends (HCP Terraform) for team collaboration"
+echo "   • For multi-environment management, use separate backends instead of workspaces"
 echo ""
 echo "Next: Challenge 5 - Skills Assessment"
 echo "Put all your Terraform knowledge to the test! 🎯"

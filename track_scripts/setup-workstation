@@ -9,7 +9,8 @@ echo "Setting up your learning environment..."
 
 # Update system
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -y
+echo "Updating package lists..."
+apt-get update -y > /dev/null 2>&1 || { echo "Failed to update package lists"; exit 1; }
 
 # Install prerequisites
 echo "Installing prerequisites..."
@@ -21,14 +22,14 @@ apt-get install -y \
     software-properties-common \
     apt-transport-https \
     ca-certificates \
-    lsb-release
+    lsb-release > /dev/null 2>&1 || { echo "Failed to install prerequisites"; exit 1; }
 
 # Install Terraform (latest stable)
 echo "Installing Terraform..."
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-apt-get update -y
-apt-get install -y terraform
+wget -O- https://apt.releases.hashicorp.com/gpg 2>/dev/null | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg 2>/dev/null
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+apt-get update -y > /dev/null 2>&1 || { echo "Failed to update after adding Terraform repo"; exit 1; }
+apt-get install -y terraform > /dev/null 2>&1 || { echo "Failed to install Terraform"; exit 1; }
 
 # Verify Terraform installation
 terraform version
@@ -42,7 +43,7 @@ apt-get install -y \
     bridge-utils \
     virtinst \
     virt-manager \
-    cpu-checker
+    cpu-checker > /dev/null 2>&1 || { echo "Failed to install Libvirt/QEMU"; exit 1; }
 
 # Enable and start libvirt
 systemctl enable libvirtd
@@ -62,7 +63,7 @@ usermod -aG libvirt $(whoami) || true
 echo "Installing Libvirt provider dependencies..."
 apt-get install -y \
     libvirt-dev \
-    pkg-config
+    pkg-config > /dev/null 2>&1 || { echo "Failed to install Libvirt provider dependencies"; exit 1; }
 
 # Create workspace directories for different challenges
 mkdir -p /root/terraform-workspace  # Challenge 1
@@ -96,7 +97,7 @@ apt-get install -y \
     nano \
     jq \
     tree \
-    git
+    git > /dev/null 2>&1 || { echo "Failed to install additional tools"; exit 1; }
 
 # Clone the lab assets repository
 echo "Cloning lab assets from GitHub..."

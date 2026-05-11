@@ -13,7 +13,7 @@ rm -rf terraform.tfstate*
 
 # Create example solution from GitHub repo
 mkdir -p /root/terraform-lab-solutions/challenge-04
-cp -r /root/lab-assets/tf-100-fundamentals-lab/assets/challenge-04/* /root/terraform-lab-solutions/challenge-04/
+cp -r /root/lab-assets/assets/challenge-04/* /root/terraform-lab-solutions/challenge-04/
 
 # Return to workspace
 cd /root/terraform-lab
@@ -31,7 +31,6 @@ In this challenge, you'll master Terraform's state system and CLI:
 
   • Understanding and inspecting state
   • State modification commands
-  • Workspaces for environment management
   • Terraform console for interactive exploration
   • Debugging with logging
   • Import and state operations
@@ -41,7 +40,6 @@ In this challenge, you'll master Terraform's state system and CLI:
 
 Key Skills:
   • terraform state list/show/mv/rm
-  • terraform workspace new/select/list
   • terraform console
   • terraform import
   • TF_LOG environment variables

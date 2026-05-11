@@ -10,7 +10,7 @@ rm -rf *
 
 # Create example solution from GitHub repo
 mkdir -p /root/terraform-lab-solutions/challenge-02
-cp -r /root/lab-assets/tf-100-fundamentals-lab/assets/challenge-02/* /root/terraform-lab-solutions/challenge-02/
+cp -r /root/lab-assets/assets/challenge-02/* /root/terraform-lab-solutions/challenge-02/
 
 # Return to workspace
 cd /root/terraform-lab

@@ -8,19 +8,11 @@ cd /root/terraform-lab
 # Copy the complete solution
 cp -r /root/terraform-lab-solutions/challenge-04/* .
 
-# Initialize first (before creating workspaces)
+# Initialize and apply
 terraform init
-
-# Create workspaces
-terraform workspace new dev 2>/dev/null || terraform workspace select dev
-terraform workspace new prod 2>/dev/null || terraform workspace select prod
-
-# Apply in dev workspace
-terraform workspace select dev
 terraform apply -auto-approve
 
-# Apply in prod workspace
-terraform workspace select prod
-terraform apply -auto-approve
+# Create a state backup as required by the challenge
+terraform state pull > backup.tfstate
 
 echo "Challenge 4 solved successfully!"

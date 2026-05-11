@@ -21,7 +21,7 @@ rm -rf terraform.tfstate*
 
 # Create comprehensive solution from GitHub repo
 mkdir -p /root/terraform-lab-solutions/challenge-05
-cp -r /root/lab-assets/tf-100-fundamentals-lab/assets/challenge-05/* /root/terraform-lab-solutions/challenge-05/
+cp -r /root/lab-assets/assets/challenge-05/* /root/terraform-lab-solutions/challenge-05/
 
 # Return to workspace
 cd /root/terraform-lab

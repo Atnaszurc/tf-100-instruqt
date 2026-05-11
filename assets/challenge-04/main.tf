@@ -15,7 +15,7 @@ provider "libvirt" {
 
 # Simple VM for state practice
 resource "libvirt_volume" "disk" {
-  name = "${terraform.workspace}-disk.qcow2"
+  name = "state-demo-disk.qcow2"
   pool = "default"
 
   capacity = 10737418240
@@ -28,9 +28,9 @@ resource "libvirt_volume" "disk" {
 }
 
 resource "libvirt_domain" "vm" {
-  name   = "${terraform.workspace}-vm"
-  memory = terraform.workspace == "prod" ? 2048 : 1024
-  vcpu   = terraform.workspace == "prod" ? 2 : 1
+  name   = "state-demo-vm"
+  memory = 1024
+  vcpu   = 1
   type   = "kvm"
 
   os = {

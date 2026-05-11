@@ -3,14 +3,14 @@ slug: state-management-cli
 id: awpvzyudwzcy
 type: challenge
 title: 'Challenge 4: State Management & CLI'
-teaser: Master Terraform state operations, workspaces, and advanced CLI features
+teaser: Master Terraform state operations and advanced CLI features
 notes:
 - type: text
   contents: "# Challenge 4: State Management & CLI\n\nIn this challenge, you'll master
     Terraform's state system and CLI:\n\n- **State Management**: Understanding and
     manipulating state\n- **State Commands**: Inspecting and modifying state safely\n-
-    **Workspaces**: Managing multiple environments\n- **CLI Features**: Advanced commands
-    and debugging\n- **State Locking**: Preventing concurrent modifications\n\nLet's
+    **CLI Features**: Advanced commands and debugging\n- **State Locking**: Preventing
+    concurrent modifications\n- **Import**: Bringing existing resources under management\n\nLet's
     master Terraform's state system! \U0001F527\n"
 tabs:
 - id: qxsfomqd7tiv
@@ -38,11 +38,10 @@ By the end of this challenge, you will be able to:
 1. **Understand Terraform state** and its purpose
 2. **Inspect state** using various commands
 3. **Modify state safely** with state commands
-4. **Use workspaces** for environment management
-5. **Debug Terraform** with logging and troubleshooting
-6. **Import existing resources** into Terraform
-7. **Move and remove resources** from state
-8. **Use advanced CLI features** effectively
+4. **Debug Terraform** with logging and troubleshooting
+5. **Import existing resources** into Terraform
+6. **Move and remove resources** from state
+7. **Use advanced CLI features** effectively
 
 **Estimated Time**: 60 minutes
 
@@ -52,14 +51,14 @@ By the end of this challenge, you will be able to:
 
 ### Real-World Scenario
 
-You're managing infrastructure across multiple environments (dev, staging, prod). You need to:
+You're managing infrastructure and need to:
 
 - Track what infrastructure exists and its current state
 - Make changes without breaking existing resources
-- Manage multiple environments efficiently
 - Import manually created resources into Terraform
 - Troubleshoot issues when things go wrong
 - Collaborate with team members safely
+- Understand and manipulate state effectively
 
 **Without proper state management**, you'd face:
 - Lost track of infrastructure
@@ -72,10 +71,10 @@ You're managing infrastructure across multiple environments (dev, staging, prod)
 
 ✅ Track all infrastructure accurately
 ✅ Make safe, predictable changes
-✅ Manage multiple environments easily
 ✅ Import existing infrastructure
 ✅ Debug issues effectively
 ✅ Collaborate safely with teams
+✅ Master state manipulation
 
 ---
 
@@ -175,51 +174,9 @@ terraform state push terraform.tfstate
 
 **⚠️ Warning**: State commands modify state directly. Always backup state first!
 
-### 4. Workspaces
+> **💡 Note on Workspaces**: While Terraform supports workspaces for managing multiple environments, HashiCorp recommends using separate state backends (like HCP Terraform workspaces or separate backend configurations) for production environments. Workspaces are best suited for temporary or development scenarios.
 
-Manage multiple environments with one configuration:
-
-```bash
-# List workspaces
-terraform workspace list
-
-# Create new workspace
-terraform workspace new staging
-
-# Switch workspace
-terraform workspace select staging
-
-# Show current workspace
-terraform workspace show
-
-# Delete workspace
-terraform workspace delete staging
-```
-
-**Workspace Use Cases**:
-```hcl
-# Reference current workspace in code
-resource "libvirt_domain" "vm" {
-  name = "${terraform.workspace}-vm"
-
-  # Different specs per workspace
-  memory = terraform.workspace == "prod" ? 4096 : 2048
-  vcpu   = terraform.workspace == "prod" ? 4 : 2
-}
-```
-
-**Workspace State Files**:
-```
-terraform.tfstate.d/
-├── dev/
-│   └── terraform.tfstate
-├── staging/
-│   └── terraform.tfstate
-└── prod/
-    └── terraform.tfstate
-```
-
-### 5. Importing Resources
+### 4. Importing Resources
 
 Bring existing infrastructure under Terraform management:
 
@@ -255,7 +212,7 @@ resource "libvirt_domain" "existing_vm" {
 # terraform plan  # Should show no changes
 ```
 
-### 6. Terraform Console
+### 5. Terraform Console
 
 Interactive expression evaluation:
 
@@ -286,7 +243,7 @@ terraform console
 - Explore state data
 - Learn Terraform functions
 
-### 7. Debugging and Logging
+### 6. Debugging and Logging
 
 Enable detailed logging for troubleshooting:
 
@@ -321,7 +278,7 @@ terraform refresh
 terraform graph | dot -Tpng > graph.png
 ```
 
-### 8. Advanced CLI Features
+### 7. Advanced CLI Features
 
 **Format and Validate**:
 ```bash
@@ -371,11 +328,10 @@ terraform show -json tfplan | jq
 You'll practice state management by:
 
 1. Creating infrastructure and inspecting state
-2. Using workspaces for multiple environments
-3. Modifying state safely
-4. Importing existing resources
-5. Debugging with console and logs
-6. Using advanced CLI features
+2. Modifying state safely
+3. Importing existing resources
+4. Debugging with console and logs
+5. Using advanced CLI features
 
 ### Step 1: Create Initial Infrastructure
 
@@ -400,16 +356,16 @@ provider "libvirt" {
 
 # Simple VM for state practice
 resource "libvirt_volume" "disk" {
-  name   = "${terraform.workspace}-disk.qcow2"
+  name   = "state-demo-disk.qcow2"
   pool   = "default"
   size   = 10737418240
   format = "qcow2"
 }
 
 resource "libvirt_domain" "vm" {
-  name   = "${terraform.workspace}-vm"
-  memory = terraform.workspace == "prod" ? 2048 : 1024
-  vcpu   = terraform.workspace == "prod" ? 2 : 1
+  name   = "state-demo-vm"
+  memory = 1024
+  vcpu   = 1
 
   disk {
     volume_id = libvirt_volume.disk.id
@@ -466,44 +422,7 @@ terraform output
 terraform output -json
 ```
 
-### Step 3: Work with Workspaces
-
-Create and manage multiple environments:
-
-```bash
-# List workspaces (should show 'default')
-terraform workspace list
-
-# Create staging workspace
-terraform workspace new staging
-
-# Apply in staging
-terraform apply -auto-approve
-
-# List resources in staging
-terraform state list
-
-# Create prod workspace
-terraform workspace new prod
-
-# Apply in prod (gets more resources)
-terraform apply -auto-approve
-
-# Compare workspaces
-terraform workspace select default
-terraform state list
-
-terraform workspace select staging
-terraform state list
-
-terraform workspace select prod
-terraform state list
-
-# Show current workspace
-terraform workspace show
-```
-
-### Step 4: Use Terraform Console
+### Step 3: Use Terraform Console
 
 Explore data interactively:
 
@@ -512,21 +431,19 @@ Explore data interactively:
 terraform console
 
 # Try these expressions:
-> terraform.workspace
-> var.environment  # If you have this variable
 > libvirt_domain.vm.name
 > libvirt_domain.vm.memory
 > libvirt_volume.disk.id
 
 # Test functions
-> upper(terraform.workspace)
-> format("%s-test", terraform.workspace)
+> upper("test")
+> format("%s-vm", "demo")
 
 # Exit
 > exit
 ```
 
-### Step 5: Modify State Safely
+### Step 4: Modify State Safely
 
 Practice state modification:
 
@@ -548,7 +465,7 @@ terraform state mv libvirt_domain.renamed_vm libvirt_domain.vm
 sed -i 's/resource "libvirt_domain" "renamed_vm"/resource "libvirt_domain" "vm"/' main.tf
 ```
 
-### Step 6: Remove and Re-import Resource
+### Step 5: Remove and Re-import Resource
 
 Practice import workflow:
 
@@ -560,7 +477,7 @@ VM_ID=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.
 terraform state rm libvirt_domain.vm
 
 # Verify VM still exists
-virsh list --all | grep "$(terraform workspace show)-vm"
+virsh list --all | grep "state-demo-vm"
 
 # Re-import
 terraform import libvirt_domain.vm "$VM_ID"
@@ -569,7 +486,7 @@ terraform import libvirt_domain.vm "$VM_ID"
 terraform plan  # Should show changes to align state
 ```
 
-### Step 7: Enable Debug Logging
+### Step 6: Enable Debug Logging
 
 Practice debugging:
 
@@ -589,7 +506,7 @@ unset TF_LOG
 unset TF_LOG_PATH
 ```
 
-### Step 8: Use Advanced CLI Features
+### Step 7: Use Advanced CLI Features
 
 ```bash
 # Format code
@@ -610,22 +527,11 @@ terraform show tfplan
 terraform show -json tfplan | jq '.resource_changes'
 ```
 
-### Step 9: Clean Up All Workspaces
+### Step 8: Clean Up
 
 ```bash
-# Destroy in current workspace
+# Destroy infrastructure
 terraform destroy -auto-approve
-
-# Switch and destroy other workspaces
-for ws in default staging; do
-  terraform workspace select $ws
-  terraform destroy -auto-approve
-done
-
-# Delete empty workspaces
-terraform workspace select default
-terraform workspace delete staging
-terraform workspace delete prod
 ```
 
 ---
@@ -670,62 +576,7 @@ Terraform state is a JSON file that tracks:
 </details>
 
 <details>
-<summary><strong>Question 2:</strong> When should you use workspaces vs. separate directories?</summary>
-
-**Answer:**
-
-**Use Workspaces When:**
-- Same configuration, different values (dev/staging/prod)
-- Quick environment switching needed
-- Environments are similar
-- Single team managing all environments
-- Simple use case
-
-**Use Separate Directories When:**
-- Significantly different configurations
-- Different teams manage environments
-- Different backends per environment
-- Need strict separation
-- Complex use cases
-
-**Comparison:**
-
-| Aspect | Workspaces | Separate Directories |
-|--------|-----------|---------------------|
-| Configuration | Shared | Independent |
-| State Files | Same backend, different files | Different backends possible |
-| Switching | `terraform workspace select` | `cd` to directory |
-| Complexity | Simple | More flexible |
-| Isolation | Moderate | Strong |
-
-**Example - Workspaces:**
-```hcl
-# One configuration, workspace-aware
-resource "libvirt_domain" "vm" {
-  name   = "${terraform.workspace}-vm"
-  memory = terraform.workspace == "prod" ? 4096 : 2048
-}
-```
-
-**Example - Separate Directories:**
-```
-environments/
-├── dev/
-│   ├── main.tf
-│   └── terraform.tfvars
-├── staging/
-│   ├── main.tf
-│   └── terraform.tfvars
-└── prod/
-    ├── main.tf
-    └── terraform.tfvars
-```
-
-**Recommendation**: Start with workspaces for simplicity, move to separate directories as complexity grows.
-</details>
-
-<details>
-<summary><strong>Question 3:</strong> What's the difference between <code>terraform state rm</code> and <code>terraform destroy</code>?</summary>
+<summary><strong>Question 2:</strong> What's the difference between <code>terraform state rm</code> and <code>terraform destroy</code>?</summary>
 
 **Answer:**
 
@@ -1006,17 +857,16 @@ terraform import resource.name resource-id
 
 **Error:**
 ```
-Error: Workspace "staging" already exists
+Error: Resource already exists in state
 ```
 
 **Solution:**
 ```bash
-# Switch to existing workspace
-terraform workspace select staging
+# Remove from state first
+terraform state rm resource_type.resource_name
 
-# Or delete and recreate
-terraform workspace delete staging
-terraform workspace new staging
+# Then import again
+terraform import resource_type.resource_name resource_id
 ```
 
 ---
@@ -1069,28 +919,7 @@ terraform state mv old new
 # Then update .tf files to match
 ```
 
-### 4. Using Workspaces for Everything
-
-**Problem:**
-```hcl
-# ❌ Too complex for workspaces
-resource "aws_instance" "vm" {
-  ami = terraform.workspace == "prod" ? "ami-prod" :
-        terraform.workspace == "staging" ? "ami-staging" :
-        terraform.workspace == "dev" ? "ami-dev" : "ami-default"
-}
-```
-
-**Solution:**
-```bash
-# ✅ Use separate directories for complex cases
-environments/
-├── dev/
-├── staging/
-└── prod/
-```
-
-### 5. Not Using Remote State for Teams
+### 4. Not Using Remote State for Teams
 
 **Problem:**
 ```bash
@@ -1117,20 +946,20 @@ terraform {
 1. **State is critical** - It's Terraform's memory of infrastructure
 2. **Never edit state manually** - Always use state commands
 3. **Always backup before modifications** - State changes are risky
-4. **Workspaces for simple cases** - Separate directories for complex ones
-5. **Use remote state for teams** - Enable collaboration and locking
-6. **Console is powerful** - Test expressions interactively
-7. **Logging helps debugging** - Use appropriate log levels
-8. **Import brings existing resources** - Under Terraform management
+4. **Use remote state for teams** - Enable collaboration and locking
+5. **Console is powerful** - Test expressions interactively
+6. **Logging helps debugging** - Use appropriate log levels
+7. **Import brings existing resources** - Under Terraform management
+8. **Separate backends for environments** - Better than workspaces for production
 
 ---
 
 ## 📚 Additional Resources
 
 - [Terraform State Documentation](https://www.terraform.io/language/state)
-- [Terraform Workspaces](https://www.terraform.io/language/state/workspaces)
 - [State Command Reference](https://www.terraform.io/cli/commands/state)
 - [Debugging Terraform](https://www.terraform.io/internals/debugging)
+- [HCP Terraform Workspaces](https://developer.hashicorp.com/terraform/cloud-docs/workspaces)
 
 ---
 
@@ -1140,7 +969,6 @@ You've mastered Terraform state and CLI! You can now:
 
 ✅ Understand and inspect Terraform state
 ✅ Modify state safely with commands
-✅ Use workspaces for environment management
 ✅ Import existing resources
 ✅ Debug with console and logging
 ✅ Use advanced CLI features
