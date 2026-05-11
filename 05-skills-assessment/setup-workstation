@@ -4,17 +4,9 @@ set -e
 # Challenge 5 Setup: Skills Assessment
 echo "Setting up Challenge 5: Skills Assessment..."
 
-# Clean workspace thoroughly
+# Clean working directory
 cd /root/terraform-lab
 terraform destroy -auto-approve 2>/dev/null || true
-
-# Clean all workspaces
-for ws in $(terraform workspace list 2>/dev/null | grep -v "default" | tr -d '*' | xargs); do
-    terraform workspace select default 2>/dev/null || true
-    terraform workspace delete "$ws" 2>/dev/null || true
-done
-
-# Clean files
 rm -rf *
 rm -rf .terraform*
 rm -rf terraform.tfstate*

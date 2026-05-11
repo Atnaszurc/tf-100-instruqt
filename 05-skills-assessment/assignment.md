@@ -8,8 +8,8 @@ notes:
 - type: text
   contents: "# Challenge 5: Skills Assessment\n\nThis is your final challenge - a
     comprehensive assessment of everything you've learned!\n\n**What You'll Build:**\n-
-    Multi-tier application infrastructure\n- Multiple environments using workspaces\n-
-    Automated configuration with cloud-init\n- Proper variable management\n- Complete
+    Multi-tier application infrastructure\n- Well-organized code structure\n-
+    Automated configuration\n- Proper variable management\n- Complete
     outputs and documentation\n\n**No Step-by-Step Instructions!**\nYou'll receive
     requirements and must implement them yourself.\n\nShow what you've learned! \U0001F680\n"
 tabs:
@@ -45,11 +45,11 @@ This is your final challenge! You'll build a complete, production-ready infrastr
 
 ### Scenario
 
-You're tasked with deploying a development and production environment for a web application. The infrastructure must be:
+You're tasked with deploying infrastructure for a web application. The infrastructure must be:
 
 - **Flexible**: Use variables for all configurable values
-- **Reusable**: Use workspaces for dev and prod environments
-- **Automated**: Use cloud-init for VM configuration
+- **Well-organized**: Separate files for different resource types
+- **Automated**: Proper configuration management
 - **Well-documented**: Include comprehensive outputs
 - **Production-ready**: Follow best practices
 
@@ -63,41 +63,36 @@ You must create:
 
 **Network Layer:**
 - Custom virtual network with NAT mode
-- CIDR: 10.20.0.0/24
 - DHCP and DNS enabled
-- Network name should include environment (workspace)
+- Network name should include environment
 
 **Storage Layer:**
 - Base Ubuntu 22.04 image (download once, reuse)
 - Separate volumes for each VM
-- Dev VMs: 15GB disks
-- Prod VMs: 25GB disks
+- VM disks: 15GB each
 
 **Compute Layer:**
 - **Web Server VM**:
-  - Dev: 1GB RAM, 1 vCPU
-  - Prod: 2GB RAM, 2 vCPU
+  - 1GB RAM, 1 vCPU
   - Install and configure Nginx
   - Serve custom HTML page with environment info
 
 - **Application Server VM**:
-  - Dev: 1GB RAM, 1 vCPU
-  - Prod: 2GB RAM, 2 vCPU
+  - 1GB RAM, 1 vCPU
   - Run Python HTTP server on port 8080
   - Return JSON with server info
 
 - **Database Server VM**:
-  - Dev: 1GB RAM, 1 vCPU
-  - Prod: 4GB RAM, 2 vCPU
+  - 2GB RAM, 1 vCPU
   - Install SQLite
   - Create sample database with tables
 
 ### 2. Configuration Requirements
 
 **Variables** (create `variables.tf`):
-- `environment` - Environment name (use workspace by default)
+- `environment` - Environment name (default: "dev")
 - `project_name` - Project identifier
-- `network_cidr` - Network CIDR block
+- `network_cidr` - Network CIDR block (optional)
 - `vm_specs` - Map of VM specifications per environment
 - `tags` - Common resource tags
 
@@ -152,15 +147,11 @@ Create separate cloud-init files for each VM type:
 
 ### 4. Workspace Requirements
 
-Create and deploy to two workspaces:
-- **dev**: Development environment (smaller resources)
-- **prod**: Production environment (larger resources)
-
-Each workspace must have:
+Deploy a complete environment with:
 - Complete infrastructure (network + 3 VMs)
-- Environment-specific resource names
-- Environment-specific resource sizes
-- Independent state files
+- Environment-specific resource names (controlled by `var.environment`)
+- Environment-specific resource sizes (controlled by `var.environment`)
+- Proper state management
 
 ### 5. Code Organization
 
@@ -187,7 +178,7 @@ Your solution must demonstrate:
 - ✅ Comprehensive outputs
 - ✅ Well-formatted code (`terraform fmt`)
 - ✅ Valid configuration (`terraform validate`)
-- ✅ Workspace-aware resource naming
+- ✅ Environment-aware resource naming (using `var.environment`)
 - ✅ Base volume + derived volume pattern
 - ✅ Proper cloud-init integration
 
@@ -199,19 +190,14 @@ Your infrastructure must pass these tests:
 
 ### Functional Tests
 
-1. **Both workspaces deploy successfully**
+1. **Infrastructure deploys successfully**
    ```bash
-   terraform workspace select dev
-   terraform apply -auto-approve
-
-   terraform workspace select prod
    terraform apply -auto-approve
    ```
 
 2. **All VMs are running**
    ```bash
-   virsh list | grep "dev-"
-   virsh list | grep "prod-"
+   virsh list --all
    ```
 
 3. **VMs have IP addresses**
@@ -232,8 +218,7 @@ Your infrastructure must pass these tests:
    ```
 
 6. **Resource counts are correct**
-   - Dev: 1 network, 4 volumes, 3 VMs
-   - Prod: 1 network, 4 volumes, 3 VMs
+   - 1 network, 4 volumes, 3 VMs
 
 ### Code Quality Tests
 
@@ -264,20 +249,19 @@ Your infrastructure must pass these tests:
 5. Write cloud-init files
 6. Create VM resources
 7. Define outputs
-8. Test in dev workspace first
-9. Deploy to prod workspace
-10. Verify everything works
+8. Test your deployment
+9. Verify everything works
 
 ### Common Patterns
 
-**Workspace-Aware Naming:**
+**Environment-Aware Naming:**
 ```hcl
-name = "${terraform.workspace}-${var.project_name}-web"
+name = "${var.environment}-${var.project_name}-web"
 ```
 
 **Environment-Specific Specs:**
 ```hcl
-memory = var.vm_specs[terraform.workspace].web.memory
+memory = var.vm_specs[var.environment].web.memory
 ```
 
 **Base + Derived Volumes:**
@@ -289,7 +273,7 @@ resource "libvirt_volume" "base" {
 
 resource "libvirt_volume" "web_disk" {
   base_volume_id = libvirt_volume.base.id
-  size           = var.vm_specs[terraform.workspace].web.disk_size
+  size           = var.vm_specs[var.environment].web.disk_size
 }
 ```
 
@@ -320,8 +304,8 @@ Your solution is complete when:
 1. ✅ All required files exist and are properly organized
 2. ✅ Code is formatted and valid
 3. ✅ Variables are defined with validation
-4. ✅ Both workspaces (dev, prod) deploy successfully
-5. ✅ All 6 VMs are running (3 per workspace)
+4. ✅ Infrastructure deploys successfully
+5. ✅ All 3 VMs are running
 6. ✅ All VMs have IP addresses
 7. ✅ Web servers respond with custom HTML
 8. ✅ App servers respond with JSON
@@ -350,7 +334,7 @@ Your solution will be evaluated on:
 - Clear naming conventions (5 pts)
 
 ### Best Practices (20 points)
-- Workspace usage (5 pts)
+- Environment-aware configuration (5 pts)
 - Base + derived volume pattern (5 pts)
 - Comprehensive outputs (5 pts)
 - Proper dependencies (5 pts)
@@ -374,7 +358,7 @@ This is your chance to demonstrate everything you've learned!
 - Test frequently as you build
 - Use previous challenges as reference
 - Don't hesitate to use `terraform console` to test expressions
-- Start with dev workspace, then deploy to prod
+- Deploy and test your infrastructure thoroughly
 
 **Good luck! You've got this! 💪**
 
@@ -387,9 +371,8 @@ Before clicking "Check", verify:
 - [ ] All required files exist
 - [ ] Code is formatted (`terraform fmt`)
 - [ ] Configuration is valid (`terraform validate`)
-- [ ] Dev workspace is deployed
-- [ ] Prod workspace is deployed
-- [ ] All VMs are running
+- [ ] Infrastructure is deployed
+- [ ] All 3 VMs are running
 - [ ] Outputs are defined and working
 - [ ] Services are accessible (wait 2-3 min after apply)
 

@@ -84,11 +84,11 @@ echo "  ✅ Variable definitions (+${var_score} pts)"
 
 # Check 6: Local values defined (5 points)
 echo "✓ Checking local values (5 pts)..."
-if grep -q "locals {" locals.tf && grep -q "terraform.workspace" locals.tf; then
+if grep -q "locals {" locals.tf; then
     SCORE=$((SCORE + 5))
-    echo "  ✅ Local values with workspace usage (+5 pts)"
+    echo "  ✅ Local values defined (+5 pts)"
 else
-    echo "  ⚠️  Local values incomplete (0 pts)"
+    echo "  ⚠️  Local values not defined (0 pts)"
 fi
 
 # Check 7: Outputs defined (5 points)
@@ -101,86 +101,42 @@ else
     echo "  ⚠️  Need at least 5 outputs (0 pts)"
 fi
 
-# Check 8: Both workspaces exist (5 points)
-echo "✓ Checking workspaces (5 pts)..."
-if terraform workspace list | grep -q "dev" && terraform workspace list | grep -q "prod"; then
-    SCORE=$((SCORE + 5))
-    echo "  ✅ Both dev and prod workspaces exist (+5 pts)"
-else
-    fail-message "Both 'dev' and 'prod' workspaces required. Create with 'terraform workspace new'."
+# Check 8: Infrastructure deployed (20 points)
+echo "✓ Checking infrastructure deployment (20 pts)..."
+
+if [ ! -f "terraform.tfstate" ]; then
+    fail-message "Infrastructure not deployed. Run 'terraform apply'."
     exit 1
 fi
 
-# Check 9: Infrastructure deployed in dev (10 points)
-echo "✓ Checking dev workspace deployment (10 pts)..."
-terraform workspace select dev > /dev/null 2>&1
-
-if [ ! -f "terraform.tfstate.d/dev/terraform.tfstate" ] && [ ! -f "terraform.tfstate" ]; then
-    fail-message "Dev workspace not deployed. Run 'terraform apply' in dev workspace."
-    exit 1
-fi
-
-dev_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
-if [ "$dev_resources" -ge 8 ]; then
-    SCORE=$((SCORE + 10))
-    echo "  ✅ Dev infrastructure deployed (+10 pts)"
+resource_count=$(terraform state list 2>/dev/null | wc -l || echo "0")
+if [ "$resource_count" -ge 8 ]; then
+    SCORE=$((SCORE + 20))
+    echo "  ✅ Infrastructure deployed (+20 pts)"
 else
-    echo "  ⚠️  Dev infrastructure incomplete (0 pts)"
+    echo "  ⚠️  Infrastructure incomplete - expected at least 8 resources, found $resource_count (0 pts)"
 fi
 
-# Check 10: Infrastructure deployed in prod (10 points)
-echo "✓ Checking prod workspace deployment (10 pts)..."
-terraform workspace select prod > /dev/null 2>&1
-
-if [ ! -f "terraform.tfstate.d/prod/terraform.tfstate" ]; then
-    fail-message "Prod workspace not deployed. Run 'terraform apply' in prod workspace."
-    exit 1
-fi
-
-prod_resources=$(terraform state list 2>/dev/null | wc -l || echo "0")
-if [ "$prod_resources" -ge 8 ]; then
-    SCORE=$((SCORE + 10))
-    echo "  ✅ Prod infrastructure deployed (+10 pts)"
+# Check 9: VMs created (20 points)
+echo "✓ Checking VMs (20 pts)..."
+vm_count=$(virsh list --all | grep -E "(web|app|db)" | wc -l || echo "0")
+if [ "$vm_count" -ge 3 ]; then
+    SCORE=$((SCORE + 20))
+    echo "  ✅ All 3 VMs created (+20 pts)"
 else
-    echo "  ⚠️  Prod infrastructure incomplete (0 pts)"
+    echo "  ⚠️  Expected 3 VMs (web, app, db), found $vm_count (0 pts)"
 fi
 
-# Check 11: VMs created in dev (10 points)
-echo "✓ Checking dev VMs (10 pts)..."
-terraform workspace select dev > /dev/null 2>&1
-dev_vms=$(virsh list --all | grep -c "dev-" || echo "0")
-if [ "$dev_vms" -ge 3 ]; then
-    SCORE=$((SCORE + 10))
-    echo "  ✅ All 3 dev VMs created (+10 pts)"
-else
-    echo "  ⚠️  Expected 3 dev VMs, found $dev_vms (0 pts)"
-fi
-
-# Check 12: VMs created in prod (10 points)
-echo "✓ Checking prod VMs (10 pts)..."
-terraform workspace select prod > /dev/null 2>&1
-prod_vms=$(virsh list --all | grep -c "prod-" || echo "0")
-if [ "$prod_vms" -ge 3 ]; then
-    SCORE=$((SCORE + 10))
-    echo "  ✅ All 3 prod VMs created (+10 pts)"
-else
-    echo "  ⚠️  Expected 3 prod VMs, found $prod_vms (0 pts)"
-fi
-
-echo "  Note: VMs may not auto-start without cloud-init configuration"
-
-# Check 13: Network configuration (5 points)
+# Check 10: Network configuration (5 points)
 echo "✓ Checking network configuration (5 pts)..."
-if grep -q "resource \"libvirt_network\"" network.tf && \
-   grep -q "10.20.0.0/24" network.tf && \
-   grep -q "terraform.workspace" network.tf; then
+if grep -q "resource \"libvirt_network\"" network.tf; then
     SCORE=$((SCORE + 5))
     echo "  ✅ Network properly configured (+5 pts)"
 else
     echo "  ⚠️  Network configuration incomplete (0 pts)"
 fi
 
-# Check 14: Storage with base volume pattern (5 points)
+# Check 11: Storage with base volume pattern (5 points)
 echo "✓ Checking storage pattern (5 pts)..."
 if grep -q "base_volume_id" storage.tf; then
     SCORE=$((SCORE + 5))
@@ -189,21 +145,18 @@ else
     echo "  ⚠️  Base volume pattern not used (0 pts)"
 fi
 
-# Check 15: Workspace-aware naming (10 points)
-echo "✓ Checking workspace-aware naming (10 pts)..."
-if grep -q "terraform.workspace" vms.tf && \
-   grep -q "terraform.workspace" network.tf; then
+# Check 12: Environment-aware naming (10 points)
+echo "✓ Checking environment-aware naming (10 pts)..."
+if grep -q "var.environment" vms.tf; then
     SCORE=$((SCORE + 10))
-    echo "  ✅ Resources use workspace in names (+10 pts)"
+    echo "  ✅ Resources use environment variable in names (+10 pts)"
 else
-    echo "  ⚠️  Workspace-aware naming incomplete (0 pts)"
+    echo "  ⚠️  Environment-aware naming not used (0 pts)"
 fi
 
-# Check 16: Outputs working (5 points)
+# Check 13: Outputs working (5 points)
 echo "✓ Checking output functionality (5 pts)..."
-terraform workspace select prod > /dev/null 2>&1
-if terraform output > /dev/null 2>&1 && \
-   terraform output vm_ips > /dev/null 2>&1; then
+if terraform output > /dev/null 2>&1; then
     SCORE=$((SCORE + 5))
     echo "  ✅ Outputs working correctly (+5 pts)"
 else

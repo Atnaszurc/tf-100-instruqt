@@ -7,4 +7,5 @@ locals {
   }
 
   vm_name_prefix = var.environment
+  network_name   = "${var.environment}-network"
 }
