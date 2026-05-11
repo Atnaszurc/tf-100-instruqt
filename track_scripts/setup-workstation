@@ -68,6 +68,14 @@ apt-get install -y \
 mkdir -p /root/terraform-workspace  # Challenge 1
 mkdir -p /root/terraform-lab        # Challenges 2-4
 mkdir -p /root/terraform-project    # Challenge 5
+
+# Create examples directory structure (persistent across all challenges)
+mkdir -p /root/terraform-workspace/examples/challenge-01
+mkdir -p /root/terraform-workspace/examples/challenge-02
+mkdir -p /root/terraform-workspace/examples/challenge-03
+mkdir -p /root/terraform-workspace/examples/challenge-04
+mkdir -p /root/terraform-workspace/examples/challenge-05
+
 cd /root/terraform-workspace
 
 # Set up default libvirt network
