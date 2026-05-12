@@ -27,6 +27,6 @@ terraform apply -auto-approve
 ## Notes
 
 - VMs use Ubuntu 22.04 cloud images
-- VMs may not auto-start without cloud-init configuration
 - All VMs are connected to the custom network
 - Storage uses efficient base + derived volume pattern
+- VMs are configured using libvirt provider 0.9+ syntax

@@ -1,6 +1,6 @@
 # Challenge 5 Solution: Multi-Tier Infrastructure
 
-Complete production-ready infrastructure with dev and prod environments.
+Complete production-ready infrastructure with environment-aware configuration.
 
 ## Architecture
 
@@ -10,40 +10,29 @@ Complete production-ready infrastructure with dev and prod environments.
 
 ## Usage
 
-### Deploy to Dev
+### Deploy Infrastructure
 ```bash
-terraform workspace new dev
-terraform workspace select dev
 terraform init
 terraform apply
 ```
 
-### Deploy to Prod
-```bash
-terraform workspace new prod
-terraform workspace select prod
-terraform apply
-```
+The environment is controlled via the `environment` variable (default: "dev").
 
 ## Features
 
-- ✅ Workspace-based environments
+- ✅ Environment-aware configuration
 - ✅ Variable validation
 - ✅ Comprehensive outputs
 - ✅ Production-ready specs
 - ✅ Multi-tier architecture
 
-## Environment Differences
+## Environment Configuration
 
-**Dev Environment:**
-- 1 vCPU per VM
-- 1 GB RAM per VM
-- 15 GB disk per VM
+The `environment` variable controls resource specifications:
+- **Dev**: 1 vCPU, 1 GB RAM, 15 GB disk per VM
+- **Prod**: 2 vCPU, 2-4 GB RAM, 25 GB disk per VM
 
-**Prod Environment:**
-- 2 vCPU per VM
-- 2-4 GB RAM per VM
-- 25 GB disk per VM
+Configure via `terraform.tfvars` or `-var` flag.
 
 ## Testing
 

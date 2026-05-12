@@ -12,14 +12,6 @@ terraform show
 terraform show -json
 ```
 
-### Workspaces
-```bash
-terraform workspace list
-terraform workspace new staging
-terraform workspace select staging
-terraform workspace show
-```
-
 ### State Modification
 ```bash
 # Always backup first!
@@ -35,7 +27,6 @@ terraform state rm resource
 ### Console
 ```bash
 terraform console
-> terraform.workspace
 > libvirt_domain.vm.name
 > exit
 ```
@@ -47,16 +38,10 @@ export TF_LOG_PATH=terraform.log
 terraform plan
 ```
 
-## Workspace Behavior
-
-The configuration uses `terraform.workspace` to:
-- Name resources: `${terraform.workspace}-vm`
-- Adjust specs: prod gets more memory/CPU
-
 ## Practice Exercises
 
-1. Create and switch between workspaces
-2. Inspect state in different workspaces
-3. Use console to explore data
-4. Practice state modification commands
-5. Enable debug logging
+1. Inspect state with various commands
+2. Use console to explore data
+3. Practice state modification commands
+4. Enable debug logging
+5. Understand state file structure
