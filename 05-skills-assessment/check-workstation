@@ -196,7 +196,7 @@ if [ "$SCORE" -ge 70 ]; then
     echo "    ✅ Infrastructure as Code principles"
     echo "    ✅ Terraform configuration and best practices"
     echo "    ✅ Variable management and validation"
-    echo "    ✅ Workspace usage for environments"
+    echo "    ✅ Environment-aware configuration"
     echo "    ✅ Resource organization and naming"
     echo "    ✅ State management"
     echo ""
@@ -204,7 +204,7 @@ if [ "$SCORE" -ge 70 ]; then
     echo ""
     echo "  You're now ready to:"
     echo "    • Build production infrastructure with Terraform"
-    echo "    • Manage multiple environments effectively"
+    echo "    • Apply infrastructure as code best practices"
     echo "    • Collaborate with teams using best practices"
     echo "    • Continue to TF-200: Terraform Modules & Patterns"
     echo ""
@@ -217,17 +217,11 @@ else
     if [ "$files_exist" != true ]; then
         echo "    • Complete all required files"
     fi
-    if [ "$dev_resources" -lt 8 ]; then
-        echo "    • Deploy complete dev infrastructure"
+    if [ "$resource_count" -lt 8 ]; then
+        echo "    • Deploy complete infrastructure (need 8+ resources)"
     fi
-    if [ "$prod_resources" -lt 8 ]; then
-        echo "    • Deploy complete prod infrastructure"
-    fi
-    if [ "$dev_vms" -lt 3 ]; then
-        echo "    • Ensure all dev VMs are created"
-    fi
-    if [ "$prod_vms" -lt 3 ]; then
-        echo "    • Ensure all prod VMs are created"
+    if [ "$vm_count" -lt 3 ]; then
+        echo "    • Ensure all 3 VMs are created (web, app, db)"
     fi
     echo ""
     echo "  💡 Review previous challenges and try again!"

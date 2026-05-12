@@ -8,10 +8,10 @@ notes:
 - type: text
   contents: "# Challenge 5: Skills Assessment\n\nThis is your final challenge - a
     comprehensive assessment of everything you've learned!\n\n**What You'll Build:**\n-
-    Multi-tier application infrastructure\n- Well-organized code structure\n-
-    Automated configuration\n- Proper variable management\n- Complete
-    outputs and documentation\n\n**No Step-by-Step Instructions!**\nYou'll receive
-    requirements and must implement them yourself.\n\nShow what you've learned! \U0001F680\n"
+    Multi-tier application infrastructure\n- Well-organized code structure\n- Automated
+    configuration\n- Proper variable management\n- Complete outputs and documentation\n\n**No
+    Step-by-Step Instructions!**\nYou'll receive requirements and must implement them
+    yourself.\n\nShow what you've learned! \U0001F680\n"
 tabs:
 - id: ikynvrcwrkw8
   title: Terminal
