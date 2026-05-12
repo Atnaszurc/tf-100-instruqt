@@ -145,7 +145,7 @@ Create separate cloud-init files for each VM type:
 - Create tables: users, products
 - Insert sample data
 
-### 4. Workspace Requirements
+### 4. Environment Requirements
 
 Deploy a complete environment with:
 - Complete infrastructure (network + 3 VMs)
