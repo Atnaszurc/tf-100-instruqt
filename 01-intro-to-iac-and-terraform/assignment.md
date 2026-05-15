@@ -430,7 +430,10 @@ resource "local_file" "hello" {
 - Example: `"${path.module}/hello.txt"` → `./hello.txt`
 
 #### Heredoc Syntax (`<<-EOT`)
-For multi-line strings:
+
+**What is this?** A way to write multi-line text without using quotes on every line.
+
+**Simple example:**
 ```hcl
 content = <<-EOT
   Line 1
@@ -438,6 +441,53 @@ content = <<-EOT
   Line 3
 EOT
 ```
+
+**What each part means:**
+- `<<-EOT` = "Start of multi-line text" (EOT = End Of Text)
+- Lines in between = Your actual content
+- `EOT` = "End of multi-line text"
+
+**Why use it?** Much easier than this:
+```hcl
+# Without heredoc (messy!)
+content = "Line 1\nLine 2\nLine 3"
+```
+
+<details>
+<summary>🔍 Click here to learn more about heredoc</summary>
+
+**The name "EOT" is just a convention:**
+- You can use any word: `<<-EOF`, `<<-END`, `<<-CONTENT`
+- Just make sure the ending matches the beginning
+- EOT (End Of Text) is most common
+
+**The `<<-` vs `<<` difference:**
+- `<<-EOT` = Ignores leading spaces (recommended)
+- `<<EOT` = Keeps all spaces exactly as written
+
+**Real-world example:**
+```hcl
+resource "local_file" "readme" {
+  content = <<-EOT
+    # My Project
+    
+    This is a README file.
+    It has multiple lines.
+    
+    ## Installation
+    Run: terraform apply
+  EOT
+  filename = "README.md"
+}
+```
+
+**You'll see this a lot in:**
+- Cloud-init configurations
+- Script files
+- Configuration files
+- Any multi-line text
+
+</details>
 
 ---
 
