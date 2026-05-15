@@ -128,6 +128,55 @@ resource "vm" "web1" {
 
 Terraform is **declarative** - you describe the desired state, and Terraform figures out how to achieve it.
 
+### What is HCL?
+
+HCL stands for **HashiCorp Configuration Language**. It's the language Terraform uses - think of it like English is to writing, or Python is to programming.
+
+**Example - This is HCL:**
+```hcl
+resource "local_file" "hello" {
+  content  = "Hello!"
+  filename = "hello.txt"
+}
+```
+
+**In Plain English:** "Create a file called hello.txt with the content 'Hello!'"
+
+**Why HCL?** It's designed to be human-readable. You can understand what this does even without knowing Terraform!
+
+<details>
+<summary>🔍 Click here to learn more about HCL syntax</summary>
+
+**HCL Syntax Basics:**
+
+HCL uses **blocks** and **arguments**:
+
+```hcl
+block_type "label" "name" {
+  argument1 = "value1"
+  argument2 = "value2"
+  
+  nested_block {
+    nested_argument = "value"
+  }
+}
+```
+
+**Key Features:**
+- **Human-readable**: Looks like configuration, not code
+- **Declarative**: You say what you want, not how to do it
+- **Structured**: Uses blocks and arguments consistently
+- **Type-safe**: Validates data types automatically
+
+**Compared to Other Languages:**
+- **JSON**: More readable than JSON (no quotes everywhere)
+- **YAML**: More structured than YAML (clearer hierarchy)
+- **Python**: Simpler than Python (no programming logic needed)
+
+**You don't need to memorize this!** You'll learn by doing in the exercises.
+
+</details>
+
 ---
 
 ## 🚀 Part 2: What is Terraform?
