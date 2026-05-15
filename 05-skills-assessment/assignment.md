@@ -113,6 +113,41 @@ You're tasked with deploying infrastructure for a web application. The infrastru
 
 ---
 
+
+### Priority Levels
+
+Not all requirements are equal. Here's what matters most:
+
+#### 🔴 Critical (Must Have)
+If these don't work, the challenge fails:
+- [ ] 3 VMs created and running
+- [ ] VMs have IP addresses
+- [ ] Infrastructure deploys without errors
+- [ ] Code is valid (`terraform validate` passes)
+
+#### 🟡 Important (Should Have)
+These show you understand the concepts:
+- [ ] Variables used (no hardcoded values)
+- [ ] Outputs defined
+- [ ] Files organized properly
+- [ ] Environment-aware naming
+
+#### 🟢 Nice to Have (Extra Credit)
+These show mastery:
+- [ ] Variable validation
+- [ ] Comprehensive outputs
+- [ ] Perfect code formatting
+- [ ] Detailed documentation
+
+### Strategy
+
+1. Get the 🔴 Critical items working first
+2. Then add 🟡 Important features
+3. Finally polish with 🟢 Nice to Have items
+
+**Minimum Passing:** All 🔴 Critical + Most 🟡 Important = 70+ points
+
+---
 ## 🎯 Technical Requirements
 
 ### 1. Infrastructure Components
