@@ -477,7 +477,17 @@ terraform state push terraform.tfstate
 
 **⚠️ Warning**: State commands modify state directly. Always backup state first!
 
-> **💡 Note on Workspaces**: While Terraform supports workspaces for managing multiple environments, HashiCorp recommends using separate state backends (like HCP Terraform workspaces or separate backend configurations) for production environments. Workspaces are best suited for temporary or development scenarios.
+> **💡 Note on Workspaces**: Terraform has two different types of "workspaces":
+>
+> 1. **CLI Workspaces** (`terraform workspace` command) - Multiple state files in one configuration. Good for temporary testing, but NOT recommended for production environments.
+>
+> 2. **HCP Terraform Workspaces** - Completely different! These are isolated environments in HashiCorp Cloud Platform with proper access controls, state management, and team collaboration features. These ARE recommended for production.
+>
+> **For production environments**, HashiCorp recommends:
+> - Use HCP Terraform workspaces (with proper RBAC and isolation), OR
+> - Use separate directories with separate state backends for each environment
+>
+> **Avoid** using CLI workspaces (`terraform workspace`) for production - they share the same backend and lack proper isolation.
 
 ### 4. Importing Resources
 
