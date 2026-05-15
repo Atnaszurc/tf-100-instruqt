@@ -4,13 +4,34 @@ set -e
 # Challenge 2 Setup: Variables, Loops & Functions
 echo "Setting up Challenge 2: Variables, Loops & Functions..."
 
-# Clean workspace
+# Clean up any previous Terraform state and resources
 cd /root/terraform-lab
+if [ -f "terraform.tfstate" ]; then
+    echo "Cleaning up previous infrastructure..."
+    terraform destroy -auto-approve 2>/dev/null || true
+fi
+
+# Clean workspace files
 rm -rf *
 
-# Create example solution from GitHub repo
+# Clean up any leftover libvirt resources
+echo "Cleaning up libvirt resources..."
+for vol in $(virsh vol-list default 2>/dev/null | grep -E "dev-terraform-lab|vm-[0-9]" | awk '{print $1}'); do
+    virsh vol-delete "$vol" --pool default 2>/dev/null || true
+done
+
+for dom in $(virsh list --all 2>/dev/null | grep -E "dev-terraform-lab|vm-[0-9]" | awk '{print $2}'); do
+    virsh destroy "$dom" 2>/dev/null || true
+    virsh undefine "$dom" 2>/dev/null || true
+done
+
+# Create example solution from GitHub repo (for reference)
 mkdir -p /root/terraform-lab-solutions/challenge-02
 cp -r /root/lab-assets/assets/challenge-02/* /root/terraform-lab-solutions/challenge-02/
+
+# Also copy to examples folder within working directory (visible in Code Editor)
+mkdir -p /root/terraform-lab/examples/challenge-02
+cp -r /root/lab-assets/assets/challenge-02/* /root/terraform-lab/examples/challenge-02/
 
 # Return to workspace
 cd /root/terraform-lab
@@ -34,7 +55,8 @@ dynamic and reusable using:
   • Built-in Functions for data transformation
 
 📁 Working Directory: /root/terraform-lab
-📚 Example Solution: /root/terraform-lab-solutions/challenge-02
+📚 Example Solution: /root/terraform-lab/examples/challenge-02
+   (Also available at: /root/terraform-lab-solutions/challenge-02)
 
 Follow the instructions in the assignment to complete the challenge!
 

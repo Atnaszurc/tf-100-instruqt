@@ -155,7 +155,7 @@ HCL uses **blocks** and **arguments**:
 block_type "label" "name" {
   argument1 = "value1"
   argument2 = "value2"
-  
+
   nested_block {
     nested_argument = "value"
   }
@@ -271,7 +271,7 @@ Every Terraform configuration needs two blocks:
 ```hcl
 terraform {
   required_version = ">= 1.14"
-  
+
   required_providers {
     local = {
       source  = "hashicorp/local"
@@ -470,10 +470,10 @@ content = "Line 1\nLine 2\nLine 3"
 resource "local_file" "readme" {
   content = <<-EOT
     # My Project
-    
+
     This is a README file.
     It has multiple lines.
-    
+
     ## Installation
     Run: terraform apply
   EOT
@@ -737,6 +737,7 @@ You can also view state in a readable format:
 
 ```bash
 terraform show
+```
 
 **🤔 What is Terraform State?**
 
@@ -818,8 +819,6 @@ terraform {
 This stores state in AWS S3 with encryption, so your team can collaborate safely.
 
 </details>
-
-```
 
 ### Step 8: Make a Change
 

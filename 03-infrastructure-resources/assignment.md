@@ -242,19 +242,36 @@ resource "libvirt_pool" "app_pool" {
 
 # Base image volume
 resource "libvirt_volume" "base_image" {
-  name   = "ubuntu-base.qcow2"
-  pool   = libvirt_pool.app_pool.name
-  source = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
-  format = "qcow2"
+  name = "ubuntu-base.qcow2"
+  pool = libvirt_pool.app_pool.name
+  create = {
+    content = {
+      url = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    }
+  }
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # VM-specific volume (based on base image)
 resource "libvirt_volume" "vm_disk" {
-  name           = "vm-disk.qcow2"
-  pool           = libvirt_pool.app_pool.name
-  base_volume_id = libvirt_volume.base_image.id
-  size           = 21474836480  # 20GB
-  format         = "qcow2"
+  name     = "vm-disk.qcow2"
+  pool     = libvirt_pool.app_pool.name
+  capacity = 21474836480  # 20GB
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.base_image.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 ```
 
@@ -433,8 +450,8 @@ data "template_file" "user_data" {
 
 resource "libvirt_cloudinit_disk" "commoninit" {
   name      = "commoninit.iso"
-  pool      = "default"
   user_data = data.template_file.user_data.rendered
+  meta_data = ""
 }
 ```
 
@@ -565,7 +582,7 @@ resource "libvirt_volume" "disk" {
 # Step 2: Create a VM that uses the disk
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-  
+
   disk {
     volume_id = libvirt_volume.disk.id  # ← This tells Terraform: "I need the disk first!"
   }
@@ -612,11 +629,11 @@ resource "libvirt_volume" "disk" {
 # 3. Create VM (uses both network and disk)
 resource "libvirt_domain" "vm" {
   name = "app-vm"
-  
+
   network_interface {
     network_id = libvirt_network.app.id  # ← Depends on network
   }
-  
+
   disk {
     volume_id = libvirt_volume.disk.id   # ← Depends on disk
   }
@@ -647,7 +664,7 @@ resource "libvirt_network" "app" {
 
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-  
+
   # VM doesn't directly reference the network in code,
   # but it needs the network to exist first
   depends_on = [libvirt_network.app]
@@ -771,32 +788,23 @@ Create `network.tf`:
 
 ```bash
 cat > network.tf << 'EOF'
-# Custom application network
 resource "libvirt_network" "app_network" {
   name      = "app-network"
-  mode      = "nat"
-  domain    = "app.local"
-  addresses = ["10.17.3.0/24"]
-
-  dhcp {
-    enabled = true
-  }
-
-  dns {
-    enabled    = true
-    local_only = false
-  }
-
   autostart = true
+
+  domain = {
+    name = "app.local"
+  }
+
+  # Note: In libvirt provider 0.9.3, mode and addresses are not supported
+  # Networks are automatically NAT-enabled with DHCP
 }
 
-# Output network information
 output "network_info" {
   description = "Network configuration details"
   value = {
-    name      = libvirt_network.app_network.name
-    addresses = libvirt_network.app_network.addresses
-    bridge    = libvirt_network.app_network.bridge
+    name   = libvirt_network.app_network.name
+    bridge = libvirt_network.app_network.bridge
   }
 }
 EOF
@@ -810,37 +818,72 @@ Create `storage.tf`:
 cat > storage.tf << 'EOF'
 # Base Ubuntu image
 resource "libvirt_volume" "ubuntu_base" {
-  name   = "ubuntu-22.04-base.qcow2"
-  pool   = "default"
-  source = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
-  format = "qcow2"
+  name = "ubuntu-22.04-base.qcow2"
+  pool = "default"
+  create = {
+    content = {
+      url = "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    }
+  }
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # Web server disk
 resource "libvirt_volume" "web_disk" {
-  name           = "web-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 21474836480  # 20GB
-  format         = "qcow2"
+  name     = "web-server-disk.qcow2"
+  pool     = "default"
+  capacity = 21474836480  # 20GB
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # App server disk
 resource "libvirt_volume" "app_disk" {
-  name           = "app-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 21474836480  # 20GB
-  format         = "qcow2"
+  name     = "app-server-disk.qcow2"
+  pool     = "default"
+  capacity = 21474836480  # 20GB
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # Database server disk
 resource "libvirt_volume" "db_disk" {
-  name           = "db-server-disk.qcow2"
-  pool           = "default"
-  base_volume_id = libvirt_volume.ubuntu_base.id
-  size           = 32212254720  # 30GB (larger for database)
-  format         = "qcow2"
+  name     = "db-server-disk.qcow2"
+  pool     = "default"
+  capacity = 32212254720  # 30GB (larger for database)
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+  backing_store = {
+    path = libvirt_volume.ubuntu_base.id
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 # Output storage information
@@ -1046,22 +1089,22 @@ cat > cloud-init.tf << 'EOF'
 # Cloud-init disk for web server
 resource "libvirt_cloudinit_disk" "web_init" {
   name      = "web-init.iso"
-  pool      = "default"
   user_data = file("${path.module}/cloud-init-web.yaml")
+  meta_data = ""
 }
 
 # Cloud-init disk for app server
 resource "libvirt_cloudinit_disk" "app_init" {
   name      = "app-init.iso"
-  pool      = "default"
   user_data = file("${path.module}/cloud-init-app.yaml")
+  meta_data = ""
 }
 
 # Cloud-init disk for database server
 resource "libvirt_cloudinit_disk" "db_init" {
   name      = "db-init.iso"
-  pool      = "default"
   user_data = file("${path.module}/cloud-init-db.yaml")
+  meta_data = ""
 }
 EOF
 ```
@@ -1072,96 +1115,153 @@ Create `vms.tf`:
 
 ```bash
 cat > vms.tf << 'EOF'
-# Web server VM
 resource "libvirt_domain" "web_server" {
   name   = "web-server"
   memory = 1024
   vcpu   = 1
+  type   = "kvm"
 
-  cloudinit = libvirt_cloudinit_disk.web_init.id
-
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "web-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
 
-  disk {
-    volume_id = libvirt_volume.web_disk.id
-  }
-
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        source = {
+          volume = {
+            pool   = "default"
+            volume = libvirt_volume.web_disk.id
+          }
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 
-# Application server VM
 resource "libvirt_domain" "app_server" {
   name   = "app-server"
   memory = 1024
   vcpu   = 1
+  type   = "kvm"
 
-  cloudinit = libvirt_cloudinit_disk.app_init.id
-
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "app-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
 
-  disk {
-    volume_id = libvirt_volume.app_disk.id
-  }
-
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        source = {
+          volume = {
+            pool   = "default"
+            volume = libvirt_volume.app_disk.id
+          }
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 
-# Database server VM
 resource "libvirt_domain" "db_server" {
   name   = "db-server"
   memory = 2048
   vcpu   = 2
+  type   = "kvm"
 
-  cloudinit = libvirt_cloudinit_disk.db_init.id
-
-  network_interface {
-    network_id     = libvirt_network.app_network.id
-    hostname       = "db-server"
-    wait_for_lease = true
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
 
-  disk {
-    volume_id = libvirt_volume.db_disk.id
-  }
-
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
-  }
-
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = true
+  devices = {
+    disks = [
+      {
+        source = {
+          volume = {
+            pool   = "default"
+            volume = libvirt_volume.db_disk.id
+          }
+        }
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+      }
+    ]
+    interfaces = [
+      {
+        network = {
+          network = libvirt_network.app_network.name
+        }
+        model = {
+          type = "virtio"
+        }
+        wait_for_lease = true
+      }
+    ]
+    console = [
+      {
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
+      }
+    ]
   }
 }
 EOF

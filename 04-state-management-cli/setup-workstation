@@ -11,9 +11,13 @@ rm -rf *
 rm -rf .terraform*
 rm -rf terraform.tfstate*
 
-# Create example solution from GitHub repo
+# Create example solution from GitHub repo (for reference)
 mkdir -p /root/terraform-lab-solutions/challenge-04
 cp -r /root/lab-assets/assets/challenge-04/* /root/terraform-lab-solutions/challenge-04/
+
+# Also copy to examples folder within working directory (visible in Code Editor)
+mkdir -p /root/terraform-lab/examples/challenge-04
+cp -r /root/lab-assets/assets/challenge-04/* /root/terraform-lab/examples/challenge-04/
 
 # Return to workspace
 cd /root/terraform-lab
@@ -36,7 +40,8 @@ In this challenge, you'll master Terraform's state system and CLI:
   • Import and state operations
 
 📁 Working Directory: /root/terraform-lab
-📚 Example Solution: /root/terraform-lab-solutions/challenge-04
+📚 Example Solution: /root/terraform-lab/examples/challenge-04
+   (Also available at: /root/terraform-lab-solutions/challenge-04)
 
 Key Skills:
   • terraform state list/show/mv/rm

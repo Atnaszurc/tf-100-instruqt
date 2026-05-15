@@ -9,9 +9,13 @@ cd /root/terraform-lab
 terraform destroy -auto-approve 2>/dev/null || true
 rm -rf *
 
-# Copy example solution from GitHub repo to solutions directory
+# Copy example solution from GitHub repo to solutions directory (for reference)
 mkdir -p /root/terraform-lab-solutions/challenge-03
 cp -r /root/lab-assets/assets/challenge-03/* /root/terraform-lab-solutions/challenge-03/
+
+# Also copy to examples folder within working directory (visible in Code Editor)
+mkdir -p /root/terraform-lab/examples/challenge-03
+cp -r /root/lab-assets/assets/challenge-03/* /root/terraform-lab/examples/challenge-03/
 
 # Return to workspace
 cd /root/terraform-lab
@@ -33,7 +37,8 @@ In this challenge, you'll build a complete 3-tier infrastructure:
   • Resource dependencies
 
 📁 Working Directory: /root/terraform-lab
-📚 Example Solution: /root/terraform-lab-solutions/challenge-03
+📚 Example Solution: /root/terraform-lab/examples/challenge-03
+   (Also available at: /root/terraform-lab-solutions/challenge-03)
 
 Follow the instructions in the assignment to complete the challenge!
 

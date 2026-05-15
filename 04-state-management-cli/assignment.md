@@ -89,7 +89,7 @@ Before we dive into technical details, let's understand what state is and why it
 
 Imagine this scenario:
 
-**Week 1:** You use Terraform to create 10 VMs  
+**Week 1:** You use Terraform to create 10 VMs
 **Week 2:** You want to add 2 more VMs (total: 12)
 
 **Question:** How does Terraform know which 10 VMs it already created?
@@ -223,16 +223,16 @@ terraform apply
 
 #### Common Questions
 
-**Q: Can I delete the state file?**  
+**Q: Can I delete the state file?**
 A: ❌ NO! Terraform will lose track of your infrastructure. It's like throwing away your receipt - you can't return anything!
 
-**Q: What if I lose the state file?**  
+**Q: What if I lose the state file?**
 A: 😱 Big problem! You'll need to either:
 - Restore from backup
 - Manually import all resources (tedious)
 - Destroy and recreate everything (not ideal)
 
-**Q: Can I share state files in git?**  
+**Q: Can I share state files in git?**
 A: ❌ NO! State files contain:
 - Sensitive data (passwords, keys)
 - Large amounts of data
@@ -240,7 +240,7 @@ A: ❌ NO! State files contain:
 
 Use remote backends instead!
 
-**Q: How often does Terraform update state?**  
+**Q: How often does Terraform update state?**
 A: After every `terraform apply` or `terraform refresh`
 
 ---
@@ -670,29 +670,61 @@ provider "libvirt" {
 
 # Simple VM for state practice
 resource "libvirt_volume" "disk" {
-  name   = "state-demo-disk.qcow2"
-  pool   = "default"
-  size   = 10737418240
-  format = "qcow2"
+  name = "state-demo-disk.qcow2"
+  pool = "default"
+
+  capacity = 10737418240
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }
 
 resource "libvirt_domain" "vm" {
   name   = "state-demo-vm"
   memory = 1024
   vcpu   = 1
+  type   = "kvm"
 
-  disk {
-    volume_id = libvirt_volume.disk.id
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
   }
 
-  network_interface {
-    network_name = "default"
-  }
+  devices = {
+    disks = [{
+      source = {
+        volume = {
+          pool   = "default"
+          volume = libvirt_volume.disk.id
+        }
+      }
+      target = {
+        dev = "vda"
+        bus = "virtio"
+      }
+    }]
 
-  console {
-    type        = "pty"
-    target_type = "serial"
-    target_port = "0"
+    interfaces = [{
+      network = {
+        network_name = "default"
+      }
+      model = {
+        type = "virtio"
+      }
+      wait_for_lease = true
+    }]
+
+    console = [{
+      type = "pty"
+      target = {
+        type = "serial"
+        port = 0
+      }
+    }]
   }
 }
 

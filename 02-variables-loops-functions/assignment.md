@@ -419,7 +419,7 @@ variable "vms" {
 
 resource "libvirt_domain" "server" {
   for_each = var.vms
-  
+
   name   = each.key              # "web", "db", "api"
   memory = each.value.memory     # Different for each!
   vcpu   = each.value.vcpu       # Different for each!
@@ -850,6 +850,16 @@ You'll create a flexible Terraform configuration that:
 3. Applies functions to transform data
 4. Outputs useful information about created resources
 
+### Step 0: Navigate to Working Directory
+
+First, navigate to the lab workspace:
+
+```bash
+cd /root/terraform-lab
+```
+
+💡 **Note**: The Code Editor tab is already open to this directory. All files you create will appear there automatically.
+
 ### Step 1: Create Variables File
 
 Create `variables.tf`:
@@ -1000,47 +1010,43 @@ resource "libvirt_domain" "vm" {
   vcpu   = each.value.vcpu
   type   = "kvm"
 
+  os = {
+    type         = "hvm"
+    type_arch    = "x86_64"
+    type_machine = "pc"
+  }
+
   devices = {
-    disk = [
-      {
+    disks = [{
+      source = {
         volume = {
+          pool   = "default"
           volume = libvirt_volume.vm_disk[each.key].id
         }
-        target = {
-          dev = "vda"
-          bus = "virtio"
-        }
       }
-    ]
-    interface = [
-      {
-        network = {
-          network = "default"
-        }
-        model = {
-          type = "virtio"
-        }
-        wait_for_lease = true
+      target = {
+        dev = "vda"
+        bus = "virtio"
       }
-    ]
-    console = [
-      {
-        type = "pty"
-        target = {
-          port = 0
-          type = "serial"
-        }
+    }]
+
+    interfaces = [{
+      network = {
+        network_name = "default"
       }
-    ]
-    graphics = [
-      {
-        type = "spice"
-        listen = {
-          type = "address"
-        }
-        autoport = true
+      model = {
+        type = "virtio"
       }
-    ]
+      wait_for_lease = true
+    }]
+
+    console = [{
+      type = "pty"
+      target = {
+        type = "serial"
+        port = 0
+      }
+    }]
   }
 }
 
