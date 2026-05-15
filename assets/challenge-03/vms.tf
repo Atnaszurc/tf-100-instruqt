@@ -16,7 +16,7 @@ resource "libvirt_domain" "web_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.web_disk.id
+            volume = libvirt_volume.web_disk.name
           }
         }
         target = {
@@ -66,7 +66,7 @@ resource "libvirt_domain" "app_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.app_disk.id
+            volume = libvirt_volume.app_disk.name
           }
         }
         target = {
@@ -116,7 +116,7 @@ resource "libvirt_domain" "db_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.db_disk.id
+            volume = libvirt_volume.db_disk.name
           }
         }
         target = {

@@ -44,7 +44,7 @@ resource "libvirt_domain" "vm" {
       source = {
         volume = {
           pool   = "default"
-          volume = libvirt_volume.disk.id
+          volume = libvirt_volume.disk.name
         }
       }
       target = {

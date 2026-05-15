@@ -267,7 +267,7 @@ resource "libvirt_volume" "vm_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.base_image.id
+    path = libvirt_volume.base_image.name
     format = {
       type = "qcow2"
     }
@@ -843,7 +843,7 @@ resource "libvirt_volume" "web_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }
@@ -861,7 +861,7 @@ resource "libvirt_volume" "app_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }
@@ -879,7 +879,7 @@ resource "libvirt_volume" "db_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }
@@ -1133,7 +1133,7 @@ resource "libvirt_domain" "web_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.web_disk.id
+            volume = libvirt_volume.web_disk.name
           }
         }
         target = {
@@ -1183,7 +1183,7 @@ resource "libvirt_domain" "app_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.app_disk.id
+            volume = libvirt_volume.app_disk.name
           }
         }
         target = {
@@ -1233,7 +1233,7 @@ resource "libvirt_domain" "db_server" {
         source = {
           volume = {
             pool   = "default"
-            volume = libvirt_volume.db_disk.id
+            volume = libvirt_volume.db_disk.name
           }
         }
         target = {
@@ -1361,33 +1361,23 @@ terraform plan
 terraform apply -auto-approve
 ```
 
-### Step 9: Test Infrastructure
+### Step 9: Verify Infrastructure
 
 ```bash
-# Wait for VMs to boot (2-3 minutes)
-sleep 180
-
-# Get VM information
+# View infrastructure summary
 terraform output vm_names
 terraform output infrastructure_summary
-
-# Get VM IP addresses using virsh
-# Note: VMs need 2-3 minutes to boot and get DHCP leases
-virsh net-dhcp-leases app-network
-
-# Test web server (after getting IP from virsh)
-# WEB_IP=<ip-from-virsh>
-# curl http://$WEB_IP
-
-# Test app server (after getting IP from virsh)
-# APP_IP=<ip-from-virsh>
-# curl http://$APP_IP:8080
 
 # Check VM status
 virsh list --all
 
-# Check network
+# Check network status
 virsh net-list --all
+
+# Verify all resources are running
+virsh dominfo web-server
+virsh dominfo app-server
+virsh dominfo db-server
 ```
 
 ### Step 10: Explore Infrastructure
@@ -1399,9 +1389,8 @@ terraform output infrastructure_summary
 # Check resource dependencies
 terraform graph | dot -Tpng > infrastructure.png
 
-# Connect to VMs (if needed)
-# virsh console web-server
-# (Use Ctrl+] to exit console)
+# View storage volumes
+virsh vol-list default
 ```
 
 ### Step 11: Clean Up

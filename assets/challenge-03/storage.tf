@@ -23,7 +23,7 @@ resource "libvirt_volume" "web_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }
@@ -40,7 +40,7 @@ resource "libvirt_volume" "app_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }
@@ -57,7 +57,7 @@ resource "libvirt_volume" "db_disk" {
     }
   }
   backing_store = {
-    path = libvirt_volume.ubuntu_base.id
+    path = libvirt_volume.ubuntu_base.name
     format = {
       type = "qcow2"
     }

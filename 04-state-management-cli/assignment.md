@@ -818,20 +818,25 @@ sed -i 's/libvirt_domain\.renamed_vm\./libvirt_domain.vm./g' main.tf
 Practice import workflow:
 
 ```bash
-# Get VM ID
-VM_ID=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.type=="libvirt_domain") | .values.id')
+# Get VM UUID from Terraform state
+VM_UUID=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.type=="libvirt_domain") | .values.uuid')
+echo "VM UUID: $VM_UUID"
 
 # Remove from state (doesn't destroy VM)
 terraform state rm libvirt_domain.vm
 
-# Verify VM still exists
+# Verify VM still exists in libvirt
 virsh list --all | grep "state-demo-vm"
 
-# Re-import
-terraform import libvirt_domain.vm "$VM_ID"
+# Verify removed from Terraform state
+terraform state list
 
-# Verify
-terraform plan  # Should show changes to align state
+# Re-import using UUID
+terraform import libvirt_domain.vm "$VM_UUID"
+
+# Verify import successful
+terraform state list
+terraform plan  # Should show no changes if import was successful
 ```
 
 ### Step 6: Enable Debug Logging
