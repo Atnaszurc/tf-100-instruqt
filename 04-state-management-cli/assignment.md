@@ -800,8 +800,9 @@ terraform state pull > backup.tfstate
 # Rename resource in state
 terraform state mv libvirt_domain.vm libvirt_domain.renamed_vm
 
-# Update configuration to match
+# Update configuration to match (both resource and output references)
 sed -i 's/resource "libvirt_domain" "vm"/resource "libvirt_domain" "renamed_vm"/' main.tf
+sed -i 's/libvirt_domain\.vm\./libvirt_domain.renamed_vm./g' main.tf
 
 # Verify no changes needed
 terraform plan
@@ -809,6 +810,7 @@ terraform plan
 # Rename back
 terraform state mv libvirt_domain.renamed_vm libvirt_domain.vm
 sed -i 's/resource "libvirt_domain" "renamed_vm"/resource "libvirt_domain" "vm"/' main.tf
+sed -i 's/libvirt_domain\.renamed_vm\./libvirt_domain.vm./g' main.tf
 ```
 
 ### Step 5: Remove and Re-import Resource

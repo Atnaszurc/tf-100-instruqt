@@ -1296,13 +1296,13 @@ Create `outputs.tf`:
 
 ```bash
 cat > outputs.tf << 'EOF'
-# VM IP addresses
-output "vm_ips" {
-  description = "IP addresses of all VMs"
+# VM names and basic info
+output "vm_names" {
+  description = "Names of all VMs"
   value = {
-    web_server = libvirt_domain.web_server.network_interface[0].addresses[0]
-    app_server = libvirt_domain.app_server.network_interface[0].addresses[0]
-    db_server  = libvirt_domain.db_server.network_interface[0].addresses[0]
+    web_server = libvirt_domain.web_server.name
+    app_server = libvirt_domain.app_server.name
+    db_server  = libvirt_domain.db_server.name
   }
 }
 
@@ -1311,39 +1311,35 @@ output "infrastructure_summary" {
   description = "Complete infrastructure overview"
   value = {
     network = {
-      name    = libvirt_network.app_network.name
-      cidr    = libvirt_network.app_network.addresses[0]
-      bridge  = libvirt_network.app_network.bridge
+      name = libvirt_network.app_network.name
     }
     vms = {
       web = {
         name   = libvirt_domain.web_server.name
         memory = libvirt_domain.web_server.memory
         vcpu   = libvirt_domain.web_server.vcpu
-        ip     = libvirt_domain.web_server.network_interface[0].addresses[0]
       }
       app = {
         name   = libvirt_domain.app_server.name
         memory = libvirt_domain.app_server.memory
         vcpu   = libvirt_domain.app_server.vcpu
-        ip     = libvirt_domain.app_server.network_interface[0].addresses[0]
       }
       db = {
         name   = libvirt_domain.db_server.name
         memory = libvirt_domain.db_server.memory
         vcpu   = libvirt_domain.db_server.vcpu
-        ip     = libvirt_domain.db_server.network_interface[0].addresses[0]
       }
     }
   }
 }
 
-# Service URLs
-output "service_urls" {
-  description = "URLs to access services"
+# VM information
+output "vm_info" {
+  description = "VM resource information"
   value = {
-    web_server = "http://${libvirt_domain.web_server.network_interface[0].addresses[0]}"
-    app_server = "http://${libvirt_domain.app_server.network_interface[0].addresses[0]}:8080"
+    web_server = "VM: ${libvirt_domain.web_server.name} (${libvirt_domain.web_server.memory}MB, ${libvirt_domain.web_server.vcpu} vCPU)"
+    app_server = "VM: ${libvirt_domain.app_server.name} (${libvirt_domain.app_server.memory}MB, ${libvirt_domain.app_server.vcpu} vCPU)"
+    db_server  = "VM: ${libvirt_domain.db_server.name} (${libvirt_domain.db_server.memory}MB, ${libvirt_domain.db_server.vcpu} vCPU)"
   }
 }
 EOF
@@ -1371,16 +1367,21 @@ terraform apply -auto-approve
 # Wait for VMs to boot (2-3 minutes)
 sleep 180
 
-# Get VM IPs
-terraform output vm_ips
+# Get VM information
+terraform output vm_names
+terraform output infrastructure_summary
 
-# Test web server (replace IP with actual)
-WEB_IP=$(terraform output -json vm_ips | jq -r '.web_server')
-curl http://$WEB_IP
+# Get VM IP addresses using virsh
+# Note: VMs need 2-3 minutes to boot and get DHCP leases
+virsh net-dhcp-leases app-network
 
-# Test app server (replace IP with actual)
-APP_IP=$(terraform output -json vm_ips | jq -r '.app_server')
-curl http://$APP_IP:8080
+# Test web server (after getting IP from virsh)
+# WEB_IP=<ip-from-virsh>
+# curl http://$WEB_IP
+
+# Test app server (after getting IP from virsh)
+# APP_IP=<ip-from-virsh>
+# curl http://$APP_IP:8080
 
 # Check VM status
 virsh list --all
@@ -1582,8 +1583,8 @@ resource "libvirt_volume" "vm1_disk" {
 
 3. **Check IP Assignment:**
    ```bash
-   virsh net-dhcp-leases network-name
-   terraform output vm_ips
+   virsh net-dhcp-leases app-network
+   terraform output vm_names
    ```
 
 4. **Test Network Connectivity:**
