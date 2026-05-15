@@ -359,6 +359,47 @@ project/
 
 For this lab, we'll keep it simple with just `main.tf`.
 
+### What is a Resource?
+
+A **resource** is a piece of infrastructure you want to create. Think of it as a "thing" you're building.
+
+**Examples of resources:**
+- A file on your computer (`local_file`)
+- A virtual machine (`libvirt_domain`)
+- A network (`libvirt_network`)
+- An AWS server (`aws_instance`)
+- A database (`aws_db_instance`)
+
+**In simple terms:** If you can point to something and say "I want one of those," it's probably a resource!
+
+**The pattern is always the same:**
+1. Tell Terraform WHAT you want (resource type)
+2. Give it a NAME (so you can refer to it later)
+3. Configure HOW you want it (arguments)
+
+<details>
+<summary>🔍 Click here to understand resource types</summary>
+
+**Resource Type Format:** `provider_resourcetype`
+
+Examples:
+- `local_file` = local provider + file resource
+- `aws_instance` = AWS provider + instance (VM) resource
+- `libvirt_domain` = libvirt provider + domain (VM) resource
+
+**Why this format?**
+- The provider name tells you which plugin handles it
+- The resource type tells you what kind of thing it is
+- Together: `aws_instance` = "an AWS virtual machine"
+
+**Finding resource types:**
+- Check the [Terraform Registry](https://registry.terraform.io/)
+- Look at provider documentation
+- Each provider lists all its resource types
+
+</details>
+
+
 ### Resource Block Anatomy
 
 ```hcl
