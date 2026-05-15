@@ -322,6 +322,137 @@ locals {
 
 ### 4. Loops and Iteration
 
+#### Loops: Which One Should I Use?
+
+The most common beginner question: "Should I use `count` or `for_each`?"
+
+**Simple Decision Tree:**
+
+```
+Do you need to create multiple similar things?
+│
+├─ YES, and I just need X copies (like 3 identical VMs)
+│  └─ Use COUNT
+│     Example: 3 identical backup files
+│
+└─ YES, but each one is different (different names, sizes, etc.)
+   └─ Use FOR_EACH
+      Example: VMs with different configurations
+```
+
+---
+
+#### Count: Simple Numeric Loops
+
+**Use when:** Creating X identical copies of something
+
+**Think of it like:** "Make 3 photocopies of this document"
+
+**Simple Example:**
+```hcl
+# Create 3 identical files
+resource "local_file" "backup" {
+  count    = 3
+  content  = "Backup file"
+  filename = "backup-${count.index}.txt"
+}
+# Creates: backup-0.txt, backup-1.txt, backup-2.txt
+```
+
+**Key Points:**
+- `count.index` starts at **0** (not 1!)
+- All resources are identical except for the index
+- Perfect for "I need 5 of these"
+
+**Real-World Use:**
+```hcl
+variable "vm_count" {
+  default = 3
+}
+
+resource "libvirt_domain" "worker" {
+  count  = var.vm_count
+  name   = "worker-${count.index + 1}"  # +1 to start at 1 instead of 0
+  memory = 2048
+  vcpu   = 2
+}
+# Creates: worker-1, worker-2, worker-3
+```
+
+---
+
+#### For_each: Map/Set Iteration
+
+**Use when:** Creating one of each thing in your list, and they're different
+
+**Think of it like:** "Make a name tag for each person on this list"
+
+**Simple Example:**
+```hcl
+# Create files with different content
+resource "local_file" "env" {
+  for_each = {
+    dev  = "Development Environment"
+    prod = "Production Environment"
+  }
+  content  = each.value
+  filename = "${each.key}.txt"
+}
+# Creates: dev.txt (contains "Development Environment")
+#          prod.txt (contains "Production Environment")
+```
+
+**Key Points:**
+- `each.key` = the name (like "dev", "prod")
+- `each.value` = the value (like "Development Environment")
+- Each resource can be completely different
+
+**Real-World Use:**
+```hcl
+variable "vms" {
+  default = {
+    web = { memory = 2048, vcpu = 2 }
+    db  = { memory = 4096, vcpu = 4 }
+    api = { memory = 1024, vcpu = 1 }
+  }
+}
+
+resource "libvirt_domain" "server" {
+  for_each = var.vms
+  
+  name   = each.key              # "web", "db", "api"
+  memory = each.value.memory     # Different for each!
+  vcpu   = each.value.vcpu       # Different for each!
+}
+```
+
+---
+
+#### Quick Comparison
+
+| Feature | Count | For_each |
+|---------|-------|----------|
+| **Use for** | X identical copies | Different configurations |
+| **Access by** | Index number (0, 1, 2) | Name/key ("web", "db") |
+| **Best for** | "Make 5 of these" | "Make one of each" |
+| **Example** | 5 backup files | Dev, staging, prod VMs |
+
+---
+
+#### Rule of Thumb
+
+- **Count** = "Make X copies of the same thing"
+- **For_each** = "Make one of each thing in my list, and they're different"
+
+**Still confused?** Start with `count` - it's simpler! You can always switch to `for_each` later when you need different configurations.
+
+---
+
+#### Detailed Loop Examples
+
+Below are more comprehensive examples showing advanced patterns:
+
+
 #### Count (Simple Numeric Loops)
 
 ```hcl
