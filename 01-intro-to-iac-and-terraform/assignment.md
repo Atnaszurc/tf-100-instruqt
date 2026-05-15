@@ -1060,9 +1060,45 @@ ls -la
 
 ## 📚 Additional Resources
 
-- [Terraform Documentation](https://www.terraform.io/docs)
-- [Terraform Registry](https://registry.terraform.io/)
-- [HashiCorp Learn](https://learn.hashicorp.com/terraform)
+<details>
+<summary>📖 Official Documentation & Learning Resources</summary>
+
+### Core Documentation
+- [Terraform Documentation](https://www.terraform.io/docs) - Complete reference for all Terraform features
+- [HCL Syntax](https://www.terraform.io/language/syntax/configuration) - HashiCorp Configuration Language guide
+- [Terraform CLI Commands](https://www.terraform.io/cli/commands) - All available commands explained
+- [Configuration Language](https://www.terraform.io/language) - Deep dive into Terraform's language
+
+### Getting Started Guides
+- [Get Started - Terraform](https://learn.hashicorp.com/collections/terraform/aws-get-started) - Official tutorial series
+- [Terraform Basics](https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code) - Infrastructure as Code fundamentals
+- [Write Terraform Configuration](https://learn.hashicorp.com/tutorials/terraform/aws-build) - Step-by-step configuration guide
+
+### Providers
+- [Terraform Registry](https://registry.terraform.io/) - Browse all available providers and modules
+- [Provider Documentation](https://registry.terraform.io/browse/providers) - Documentation for specific providers
+- [Local Provider](https://registry.terraform.io/providers/hashicorp/local/latest/docs) - The provider we used in this challenge
+
+### State Management
+- [State Overview](https://www.terraform.io/language/state) - Understanding Terraform state
+- [Remote State](https://www.terraform.io/language/state/remote) - Storing state remotely for teams
+- [State Commands](https://www.terraform.io/cli/commands/state) - Managing state with CLI
+
+### Best Practices
+- [Terraform Style Guide](https://www.terraform.io/language/syntax/style) - Code formatting conventions
+- [Best Practices](https://www.terraform.io/cloud-docs/recommended-practices) - HashiCorp's recommendations
+- [Security Best Practices](https://www.terraform.io/language/values/variables#suppressing-values-in-cli-output) - Keeping your infrastructure secure
+
+### Community & Support
+- [Terraform Community Forum](https://discuss.hashicorp.com/c/terraform-core) - Ask questions and get help
+- [Terraform GitHub](https://github.com/hashicorp/terraform) - Source code and issue tracking
+- [HashiCorp Blog](https://www.hashicorp.com/blog/products/terraform) - Latest news and tutorials
+
+### Video Tutorials
+- [Terraform in 15 Minutes](https://www.youtube.com/watch?v=l5k1ai_GBDE) - Quick introduction
+- [HashiCorp YouTube Channel](https://www.youtube.com/c/HashiCorp) - Official video content
+
+</details>
 
 ---
 
