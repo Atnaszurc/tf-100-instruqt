@@ -520,33 +520,211 @@ resource "libvirt_domain" "web_server" {
 
 ### 5. Resource Dependencies
 
-Terraform automatically handles dependencies, but you can make them explicit:
+#### Why Do Dependencies Matter?
 
+**The Problem:**
+
+Imagine you're building a house. You need to:
+1. Pour the foundation
+2. Build the walls
+3. Add the roof
+
+**What happens if you try to add the roof first?**
+- ❌ It falls down! You need the walls first.
+- ❌ The walls need the foundation first.
+- ❌ Everything must happen in the right order!
+
+**Same with infrastructure:**
+- VM needs a disk (can't boot without storage)
+- Disk needs a storage pool (where to store the disk)
+- VM needs a network (to communicate)
+- Everything needs to happen in the correct order
+
+---
+
+#### Terraform's Job: Figure Out the Order
+
+**Good news:** Terraform automatically figures out the correct order!
+
+**How?** By looking at your code and seeing what references what.
+
+---
+
+#### Implicit Dependencies (Automatic)
+
+**This is the magic part** - you don't need to tell Terraform the order. Just reference resources, and Terraform figures it out!
+
+**Example:**
 ```hcl
-# Implicit dependency (Terraform detects automatically)
-resource "libvirt_domain" "vm" {
-  name = "my-vm"
-
-  disk {
-    volume_id = libvirt_volume.disk.id  # Implicit dependency
-  }
+# Step 1: Create a disk
+resource "libvirt_volume" "disk" {
+  name = "my-disk"
+  size = 10737418240  # 10GB
 }
 
-# Explicit dependency (when needed)
+# Step 2: Create a VM that uses the disk
 resource "libvirt_domain" "vm" {
   name = "my-vm"
-
-  depends_on = [
-    libvirt_network.app_network,
-    libvirt_volume.disk
-  ]
+  
+  disk {
+    volume_id = libvirt_volume.disk.id  # ← This tells Terraform: "I need the disk first!"
+  }
 }
 ```
 
-**Dependency Types**:
-- **Implicit**: Terraform detects from resource references
-- **Explicit**: Defined with `depends_on`
-- **Data dependencies**: Data sources depend on resources
+**Terraform sees:** "VM uses `disk.id`, so I must create disk before VM"
+
+**You don't need to say:** "Create disk first, then VM"
+
+**Terraform is smart enough to figure it out!** 🧠
+
+---
+
+#### How Terraform Knows
+
+When you write:
+```hcl
+volume_id = libvirt_volume.disk.id
+```
+
+Terraform thinks:
+1. "VM needs `libvirt_volume.disk.id`"
+2. "That means `libvirt_volume.disk` must exist first"
+3. "I'll create the disk, THEN create the VM"
+
+**It's automatic!** This is called an **implicit dependency**.
+
+---
+
+#### Real-World Example
+
+```hcl
+# 1. Create network
+resource "libvirt_network" "app" {
+  name = "app-network"
+}
+
+# 2. Create disk
+resource "libvirt_volume" "disk" {
+  name = "app-disk"
+}
+
+# 3. Create VM (uses both network and disk)
+resource "libvirt_domain" "vm" {
+  name = "app-vm"
+  
+  network_interface {
+    network_id = libvirt_network.app.id  # ← Depends on network
+  }
+  
+  disk {
+    volume_id = libvirt_volume.disk.id   # ← Depends on disk
+  }
+}
+```
+
+**Terraform's plan:**
+1. Create network and disk (can happen in parallel)
+2. Wait for both to finish
+3. Create VM (needs both)
+
+**You didn't specify the order - Terraform figured it out!**
+
+---
+
+#### Explicit Dependencies (When You Need Them)
+
+**95% of the time, implicit dependencies are enough.**
+
+But sometimes, Terraform can't figure it out automatically. Then you use `depends_on`:
+
+**Example: When to use `depends_on`**
+
+```hcl
+resource "libvirt_network" "app" {
+  name = "app-network"
+}
+
+resource "libvirt_domain" "vm" {
+  name = "my-vm"
+  
+  # VM doesn't directly reference the network in code,
+  # but it needs the network to exist first
+  depends_on = [libvirt_network.app]
+}
+```
+
+**Use `depends_on` when:**
+- Resources have a relationship Terraform can't see
+- You need to force a specific order
+- One resource must exist before another, but there's no direct reference
+
+**But remember:** You rarely need this! Implicit dependencies handle most cases.
+
+---
+
+#### Dependency Visualization
+
+**Terraform can show you the dependency graph:**
+
+```bash
+terraform graph | dot -Tpng > graph.png
+```
+
+This creates a visual diagram showing:
+- Which resources depend on which
+- The order Terraform will create them
+- Parallel vs sequential operations
+
+---
+
+#### Common Dependency Patterns
+
+**Pattern 1: Chain**
+```
+Network → Volume → VM
+```
+Each depends on the previous one.
+
+**Pattern 2: Fan-out**
+```
+        → VM1
+Network → VM2
+        → VM3
+```
+Multiple resources depend on one.
+
+**Pattern 3: Complex**
+```
+Network → VM1 → Database
+       ↘ VM2 ↗
+```
+Multiple interdependencies.
+
+**Terraform handles all of these automatically!**
+
+---
+
+#### Key Takeaways
+
+✅ **Terraform automatically figures out dependencies**
+- Just reference resources (like `resource.name.id`)
+- Terraform creates them in the right order
+
+✅ **You rarely need `depends_on`**
+- Only use when Terraform can't detect the dependency
+- 95% of the time, implicit dependencies work
+
+✅ **Don't overthink it!**
+- Write your code naturally
+- Reference what you need
+- Terraform does the rest
+
+---
+
+#### Detailed Dependency Examples
+
+For more advanced dependency scenarios:
 
 ### 6. Data Sources
 
