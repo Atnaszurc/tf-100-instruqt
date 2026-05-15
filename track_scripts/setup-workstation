@@ -26,10 +26,35 @@ apt-get install -y \
 
 # Install Terraform (latest stable)
 echo "Installing Terraform..."
-wget -O- https://apt.releases.hashicorp.com/gpg 2>/dev/null | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg 2>/dev/null
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
-apt-get update -y > /dev/null 2>&1 || { echo "Failed to update after adding Terraform repo"; exit 1; }
-apt-get install -y terraform > /dev/null 2>&1 || { echo "Failed to install Terraform"; exit 1; }
+# Add HashiCorp GPG key
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+# Add HashiCorp repository
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+
+# Update package list
+apt-get update -y
+
+# Install Terraform
+apt-get install -y terraform || {
+    echo "Failed to install Terraform from HashiCorp repo"
+    echo "Attempting alternative installation method..."
+    
+    # Fallback: Direct binary download
+    TERRAFORM_VERSION="1.9.8"
+    wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    mv terraform /usr/local/bin/
+    chmod +x /usr/local/bin/terraform
+    rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    
+    # Verify fallback installation
+    if ! command -v terraform &> /dev/null; then
+        echo "Failed to install Terraform via fallback method"
+        exit 1
+    fi
+    echo "✓ Terraform installed via direct download"
+}
 
 # Verify Terraform installation
 terraform version
