@@ -68,6 +68,146 @@ Imagine you're managing infrastructure for multiple environments (dev, staging, 
 
 ## 🔍 Core Concepts
 
+### Variables: Start Simple
+
+Before diving into all the details, let's start with the absolute basics.
+
+**What is a variable?**
+A variable is like a blank form field that you can fill in later. Instead of hardcoding "dev" everywhere in your code, you create a variable and use it wherever you need that value.
+
+**The Simplest Variable:**
+
+```hcl
+variable "environment" {
+  type    = string
+  default = "dev"
+}
+```
+
+**What this means in plain English:**
+- "I'm creating a variable called 'environment'"
+- "It holds text (string)"
+- "If nobody provides a value, use 'dev'"
+
+**Using it in your code:**
+```hcl
+resource "local_file" "config" {
+  content  = "Environment: ${var.environment}"
+  filename = "config.txt"
+}
+```
+
+**Result:** When you create the file, it will say "Environment: dev"
+
+**The magic:** Change the variable once, and it updates everywhere you used it!
+
+---
+
+### Variables: Adding Numbers
+
+Once you're comfortable with text variables, numbers work the same way:
+
+```hcl
+variable "vm_memory" {
+  type    = number
+  default = 1024
+}
+```
+
+**That's it!** Same concept, just for numbers instead of text.
+
+**Using it:**
+```hcl
+resource "libvirt_domain" "vm" {
+  name   = "my-vm"
+  memory = var.vm_memory  # Uses 1024
+}
+```
+
+---
+
+### Variables: The Three Types You Need to Know
+
+As a beginner, focus on these three types:
+
+1. **string** - Text (like "dev", "hello", "192.168.1.1")
+2. **number** - Numbers (like 1024, 5, 100)
+3. **bool** - True or false (like true, false)
+
+**Examples:**
+```hcl
+variable "name" {
+  type    = string
+  default = "my-app"
+}
+
+variable "count" {
+  type    = number
+  default = 3
+}
+
+variable "enabled" {
+  type    = bool
+  default = true
+}
+```
+
+---
+
+### Variables: Getting Fancy (Later)
+
+After you master simple variables, you'll learn about:
+- **Lists** - Multiple values: `["dev", "staging", "prod"]`
+- **Maps** - Key-value pairs: `{dev = "small", prod = "large"}`
+- **Objects** - Complex structures with multiple fields
+
+**But don't worry about those yet!** Master simple variables first.
+
+<details>
+<summary>🔍 Click here to see advanced variable types (optional)</summary>
+
+**List Example:**
+```hcl
+variable "environments" {
+  type    = list(string)
+  default = ["dev", "staging", "prod"]
+}
+```
+
+**Map Example:**
+```hcl
+variable "vm_sizes" {
+  type = map(number)
+  default = {
+    dev  = 1024
+    prod = 4096
+  }
+}
+```
+
+**Object Example:**
+```hcl
+variable "vm_config" {
+  type = object({
+    name   = string
+    memory = number
+    vcpu   = number
+  })
+  default = {
+    name   = "my-vm"
+    memory = 2048
+    vcpu   = 2
+  }
+}
+```
+
+You'll use these in more advanced scenarios, but simple variables will get you very far!
+
+</details>
+
+---
+
+
 ### 1. Input Variables
 
 Input variables let you parameterize your Terraform configurations:
