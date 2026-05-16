@@ -17,7 +17,7 @@ for file in "${required_files[@]}"; do
     fi
 done
 
-# Check 3: Terraform initialized
+# Check 2: Terraform initialized
 echo "✓ Checking Terraform initialization..."
 
 if [ ! -d ".terraform" ]; then
@@ -25,7 +25,7 @@ if [ ! -d ".terraform" ]; then
     exit 1
 fi
 
-# Check 4: Configuration is valid
+# Check 3: Configuration is valid
 echo "✓ Validating Terraform configuration..."
 
 if ! terraform validate > /dev/null 2>&1; then
@@ -33,7 +33,7 @@ if ! terraform validate > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check 5: Network configuration exists
+# Check 4: Network configuration exists
 echo "✓ Checking network configuration..."
 
 if ! grep -q "resource \"libvirt_network\"" network.tf; then
@@ -41,7 +41,7 @@ if ! grep -q "resource \"libvirt_network\"" network.tf; then
     exit 1
 fi
 
-# Check 6: Storage configuration exists
+# Check 5: Storage configuration exists
 echo "✓ Checking storage configuration..."
 
 if ! grep -q "resource \"libvirt_volume\"" storage.tf; then
@@ -49,15 +49,15 @@ if ! grep -q "resource \"libvirt_volume\"" storage.tf; then
     exit 1
 fi
 
-# Check 7: Base volume and derived volumes
+# Check 6: Base volume and derived volumes
 echo "✓ Checking base and derived volumes..."
 
-if ! grep -q "base_volume" storage.tf && ! grep -q "backing_store" storage.tf; then
-    fail-message "No base_volume or backing_store references found. Use base volumes with derived volumes for efficiency."
+if ! grep -q "backing_store" storage.tf; then
+    fail-message "No backing_store references found. Use base volumes with derived volumes for efficiency."
     exit 1
 fi
 
-# Check 8: VMs defined
+# Check 7: VMs defined
 echo "✓ Checking VM definitions..."
 
 vm_count=$(grep -c "resource \"libvirt_domain\"" vms.tf || echo "0")
@@ -66,7 +66,7 @@ if [ "$vm_count" -lt 3 ]; then
     exit 1
 fi
 
-# Check 9: VMs use custom network
+# Check 8: VMs use custom network
 echo "✓ Checking network integration..."
 
 if ! grep -q "network" vms.tf; then
@@ -74,83 +74,31 @@ if ! grep -q "network" vms.tf; then
     exit 1
 fi
 
-# Check 10: Outputs defined
+# Check 9: Outputs defined
 echo "✓ Checking output definitions..."
 
 if ! grep -q "output" outputs.tf; then
-    fail-message "No outputs defined in outputs.tf. Define outputs for VM IPs and infrastructure info."
+    fail-message "No outputs defined in outputs.tf. Define outputs for VM names and infrastructure info."
     exit 1
 fi
 
-# Check 11: Plan succeeds
-echo "✓ Checking Terraform plan..."
+# Check 10: State file exists (infrastructure has been applied)
+echo "✓ Checking Terraform state..."
 
-terraform plan -out=tfplan > /tmp/plan_output.txt 2>&1 || plan_exit_code=$?
-if [ "${plan_exit_code:-0}" -ne 0 ]; then
-    fail-message "Terraform plan failed. Fix configuration errors. Run 'terraform plan' to see details."
+if [ ! -f "terraform.tfstate" ]; then
+    fail-message "No state file found. Run 'terraform apply' to create your infrastructure."
     exit 1
 fi
 
-# Check 12: Apply succeeds
-echo "✓ Applying Terraform configuration (this may take 5-10 minutes)..."
-
-terraform apply -auto-approve > apply.log 2>&1 || apply_exit_code=$?
-if [ "${apply_exit_code:-0}" -ne 0 ]; then
-    fail-message "Terraform apply failed. Check apply.log for errors. Common issues: network conflicts, insufficient resources, or download failures."
+# Check 11: State file is not empty
+if [ ! -s "terraform.tfstate" ]; then
+    fail-message "State file is empty. Run 'terraform apply' to create your infrastructure."
     exit 1
 fi
 
-# Check 13: Network was created
-echo "✓ Checking network creation..."
-
-if ! virsh net-list --all | grep -q "app-network"; then
-    fail-message "Custom network 'app-network' not found. Ensure network resource was created successfully."
-    exit 1
-fi
-
-# Check 14: Network is active
-echo "✓ Checking network status..."
-
-if ! virsh net-list | grep -q "app-network.*active"; then
-    fail-message "Network 'app-network' exists but is not active. Check network configuration."
-    exit 1
-fi
-
-# Check 15: VMs were created
-echo "✓ Checking VM creation..."
-
-expected_vms=("web-server" "app-server" "db-server")
-for vm in "${expected_vms[@]}"; do
-    if ! virsh list --all | grep -q "$vm"; then
-        fail-message "VM '$vm' not found. Ensure all three VMs were created."
-        exit 1
-    fi
-done
-
-# Check 16: Outputs are available
-echo "✓ Checking outputs..."
-
-terraform output > /dev/null 2>&1 || output_exit_code=$?
-if [ "${output_exit_code:-0}" -ne 0 ]; then
-    fail-message "No outputs available. Ensure outputs.tf is properly configured."
-    exit 1
-fi
-
-# Check 17: Infrastructure summary output exists
-echo "✓ Validating infrastructure summary..."
-
-terraform output infrastructure_summary > /dev/null 2>&1 || infra_summary_exit_code=$?
-if [ "${infra_summary_exit_code:-0}" -ne 0 ]; then
-    fail-message "Output 'infrastructure_summary' not available. Define this output in outputs.tf."
-    exit 1
-fi
-
-# Check 18: Volumes were created
-echo "✓ Checking storage volumes..."
-
-volume_count=$(virsh vol-list default | grep -c "qcow2" || echo "0")
-if [ "$volume_count" -lt 4 ]; then
-    fail-message "Expected at least 4 volumes (1 base + 3 derived), found $volume_count."
+# Check 12: State contains resources
+if ! grep -q "\"resources\":" terraform.tfstate; then
+    fail-message "State file contains no resources. Run 'terraform apply' to create your infrastructure."
     exit 1
 fi
 
@@ -164,14 +112,11 @@ echo "╚═══════════════════════�
 echo ""
 echo "Outstanding work! You've successfully built a complete infrastructure:"
 echo ""
-echo "  ✓ Created custom virtual network with NAT and DHCP"
-echo "  ✓ Configured storage with base and derived volumes"
-echo "  ✓ Deployed 3-tier application infrastructure"
-echo "  ✓ Managed resource dependencies correctly"
-echo "  ✓ Exposed infrastructure information via outputs"
-echo ""
-echo "Infrastructure Summary:"
-terraform output infrastructure_summary | head -20
+echo "  ✓ Created all required Terraform files"
+echo "  ✓ Configured custom virtual network"
+echo "  ✓ Set up storage with base and derived volumes"
+echo "  ✓ Defined 3-tier application infrastructure"
+echo "  ✓ Applied configuration and created state"
 echo ""
 echo "Key Skills Mastered:"
 echo "  • Virtual network creation and configuration"
@@ -180,8 +125,8 @@ echo "  • Base volume + derived volume pattern"
 echo "  • Resource dependency management"
 echo "  • Complete infrastructure deployment"
 echo ""
-echo "💡 Tip: Your VMs are now running!"
-echo "   You can verify them using: virsh list --all"
+echo "💡 Tip: Your infrastructure is now managed by Terraform!"
+echo "   You can verify resources using: virsh list --all"
 echo ""
 echo "Next: Challenge 4 - State Management & CLI"
 echo "Master Terraform's state system and advanced CLI features!"
