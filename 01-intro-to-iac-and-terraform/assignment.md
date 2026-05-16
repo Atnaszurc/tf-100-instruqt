@@ -15,11 +15,23 @@ tabs:
   title: Terminal
   type: terminal
   hostname: workstation
+  workdir: /root/terraform-workspace
+- id: 644400000000000000000000
+  title: Code Editor
+  type: code
+  hostname: workstation
+  path: /root/terraform-workspace
+  new_file: true
+difficulty: basic
+timelimit: 5400
+enhanced_loading: null
+---
 - id: j6xgiqozfq2m
   title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-workspace
+  new_file: true
 difficulty: basic
 timelimit: 5400
 enhanced_loading: null

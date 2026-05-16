@@ -18,11 +18,13 @@ tabs:
   title: Terminal
   type: terminal
   hostname: workstation
+  workdir: /root/terraform-lab
 - id: 9rx5zokgvr3o
   title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
+  new_file: true
 difficulty: basic
 timelimit: 5400
 enhanced_loading: null

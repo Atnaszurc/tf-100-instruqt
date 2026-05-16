@@ -17,11 +17,13 @@ tabs:
   title: Terminal
   type: terminal
   hostname: workstation
+  workdir: /root/terraform-lab
 - id: nahvnvdyk5ha
   title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
+  new_file: true
 difficulty: basic
 timelimit: 3600
 enhanced_loading: null
@@ -659,7 +661,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      version = "~> 0.9"
     }
   }
 }
@@ -699,7 +701,7 @@ resource "libvirt_domain" "vm" {
       source = {
         volume = {
           pool   = "default"
-          volume = libvirt_volume.disk.id
+          volume = libvirt_volume.disk.name
         }
       }
       target = {

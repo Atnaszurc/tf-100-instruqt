@@ -17,11 +17,13 @@ tabs:
   title: Terminal
   type: terminal
   hostname: workstation
+  workdir: /root/terraform-lab
 - id: 7qb4iwcve5ap
   title: Code Editor
   type: code
   hostname: workstation
   path: /root/terraform-lab
+  new_file: true
 difficulty: basic
 timelimit: 7200
 enhanced_loading: null
